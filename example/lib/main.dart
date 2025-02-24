@@ -243,6 +243,7 @@ class _MailPageState extends State<MailPage> {
                                           _lastShowcaseWidget
                                         ]);
                                       },
+                                      tooltipPosition: TooltipPosition.right,
                                       tooltipActionConfig:
                                           const TooltipActionConfig(
                                         alignment: MainAxisAlignment.end,
@@ -290,6 +291,7 @@ class _MailPageState extends State<MailPage> {
                           "Tap to see profile which contains user's name, profile picture, mobile number and country",
                       tooltipBackgroundColor: Theme.of(context).primaryColor,
                       textColor: Colors.white,
+                      tooltipPosition: TooltipPosition.left,
                       floatingActionWidget: FloatingActionWidget(
                         left: 16,
                         bottom: 16,
@@ -316,25 +318,25 @@ class _MailPageState extends State<MailPage> {
                         gapBetweenContentAndAction: 10,
                         position: TooltipActionPosition.outside,
                       ),
-                      tooltipActions: const [
-                        TooltipActionButton(
-                          backgroundColor: Colors.transparent,
-                          type: TooltipDefaultActionType.previous,
-                          padding: EdgeInsets.symmetric(
-                            vertical: 4,
-                          ),
-                          textStyle: TextStyle(
-                            color: Colors.white,
-                          ),
-                        ),
-                        TooltipActionButton(
-                          type: TooltipDefaultActionType.next,
-                          backgroundColor: Colors.white,
-                          textStyle: TextStyle(
-                            color: Colors.pinkAccent,
-                          ),
-                        ),
-                      ],
+                      // tooltipActions: const [
+                      //   TooltipActionButton(
+                      //     backgroundColor: Colors.transparent,
+                      //     type: TooltipDefaultActionType.previous,
+                      //     padding: EdgeInsets.symmetric(
+                      //       vertical: 4,
+                      //     ),
+                      //     textStyle: TextStyle(
+                      //       color: Colors.white,
+                      //     ),
+                      //   ),
+                      //   TooltipActionButton(
+                      //     type: TooltipDefaultActionType.next,
+                      //     backgroundColor: Colors.white,
+                      //     textStyle: TextStyle(
+                      //       color: Colors.pinkAccent,
+                      //     ),
+                      //   ),
+                      // ],
                       child: Container(
                         padding: const EdgeInsets.all(5),
                         width: 45,
@@ -391,33 +393,34 @@ class _MailPageState extends State<MailPage> {
         description: 'Click here to compose mail',
         targetBorderRadius: const BorderRadius.all(Radius.circular(16)),
         showArrow: false,
-        tooltipActions: [
-          TooltipActionButton(
-              type: TooltipDefaultActionType.previous,
-              name: 'Back',
-              onTap: () {
-                // Write your code on button tap
-                ShowCaseWidget.of(context).previous();
-              },
-              backgroundColor: Colors.pink.shade50,
-              textStyle: const TextStyle(
-                color: Colors.pink,
-              )),
-          const TooltipActionButton(
-            type: TooltipDefaultActionType.skip,
-            name: 'Close',
-            textStyle: TextStyle(
-              color: Colors.white,
-            ),
-            tailIcon: ActionButtonIcon(
-              icon: Icon(
-                Icons.close,
-                color: Colors.white,
-                size: 15,
-              ),
-            ),
-          ),
-        ],
+        tooltipPosition: TooltipPosition.left,
+        // tooltipActions: [
+        //   TooltipActionButton(
+        //       type: TooltipDefaultActionType.previous,
+        //       name: 'Back',
+        //       onTap: () {
+        //         // Write your code on button tap
+        //         ShowCaseWidget.of(context).previous();
+        //       },
+        //       backgroundColor: Colors.pink.shade50,
+        //       textStyle: const TextStyle(
+        //         color: Colors.pink,
+        //       )),
+        //   const TooltipActionButton(
+        //     type: TooltipDefaultActionType.skip,
+        //     name: 'Close',
+        //     textStyle: TextStyle(
+        //       color: Colors.white,
+        //     ),
+        //     tailIcon: ActionButtonIcon(
+        //       icon: Icon(
+        //         Icons.close,
+        //         color: Colors.white,
+        //         size: 15,
+        //       ),
+        //     ),
+        //   ),
+        // ],
         child: FloatingActionButton(
           backgroundColor: Theme.of(context).primaryColor,
           onPressed: () {
@@ -479,34 +482,34 @@ class _MailPageState extends State<MailPage> {
             position: TooltipActionPosition.outside,
             gapBetweenContentAndAction: 16,
           ),
-          tooltipActions: [
-            TooltipActionButton(
-              type: TooltipDefaultActionType.previous,
-              name: 'Back',
-              onTap: () {
-                // Write your code on button tap
-                ShowCaseWidget.of(context).previous();
-              },
-              backgroundColor: Colors.pink.shade50,
-              textStyle: const TextStyle(
-                color: Colors.pink,
-              ),
-            ),
-            const TooltipActionButton(
-              type: TooltipDefaultActionType.skip,
-              name: 'Close',
-              textStyle: TextStyle(
-                color: Colors.white,
-              ),
-              tailIcon: ActionButtonIcon(
-                icon: Icon(
-                  Icons.close,
-                  color: Colors.white,
-                  size: 15,
-                ),
-              ),
-            ),
-          ],
+          // tooltipActions: [
+          //   TooltipActionButton(
+          //     type: TooltipDefaultActionType.previous,
+          //     name: 'Back',
+          //     onTap: () {
+          //       // Write your code on button tap
+          //       ShowCaseWidget.of(context).previous();
+          //     },
+          //     backgroundColor: Colors.pink.shade50,
+          //     textStyle: const TextStyle(
+          //       color: Colors.pink,
+          //     ),
+          //   ),
+          //   const TooltipActionButton(
+          //     type: TooltipDefaultActionType.skip,
+          //     name: 'Close',
+          //     textStyle: TextStyle(
+          //       color: Colors.white,
+          //     ),
+          //     tailIcon: ActionButtonIcon(
+          //       icon: Icon(
+          //         Icons.close,
+          //         color: Colors.white,
+          //         size: 15,
+          //       ),
+          //     ),
+          //   ),
+          // ],
           child: MailTile(
             mail: mail,
             showCaseKey: _four,
@@ -598,22 +601,23 @@ class MailTile extends StatelessWidget {
                       crossAxisAlignment: CrossAxisAlignment.center,
                       actionGap: 16,
                     ),
-                    tooltipActions: const [
-                      TooltipActionButton(
-                        type: TooltipDefaultActionType.previous,
-                        name: 'Back',
-                        textStyle: TextStyle(
-                          color: Colors.white,
-                        ),
-                      ),
-                      TooltipActionButton(
-                        type: TooltipDefaultActionType.skip,
-                        name: 'Close',
-                        textStyle: TextStyle(
-                          color: Colors.white,
-                        ),
-                      ),
-                    ],
+                    tooltipPosition: TooltipPosition.right,
+                    // tooltipActions: const [
+                    //   TooltipActionButton(
+                    //     type: TooltipDefaultActionType.previous,
+                    //     name: 'Back',
+                    //     textStyle: TextStyle(
+                    //       color: Colors.white,
+                    //     ),
+                    //   ),
+                    //   TooltipActionButton(
+                    //     type: TooltipDefaultActionType.skip,
+                    //     name: 'Close',
+                    //     textStyle: TextStyle(
+                    //       color: Colors.white,
+                    //     ),
+                    //   ),
+                    // ],
                     targetShapeBorder: const CircleBorder(),
                     targetBorderRadius: const BorderRadius.all(
                       Radius.circular(150),

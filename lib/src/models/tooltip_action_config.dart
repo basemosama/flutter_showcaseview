@@ -42,7 +42,7 @@ class TooltipActionConfig {
 
   /// Defines running direction alignment for the Action widgets.
   ///
-  /// Default to [crossAxisAlignment.start]
+  /// Default to [CrossAxisAlignment.start]
   final CrossAxisAlignment crossAxisAlignment;
 
   /// If aligning items according to their baseline, which baseline to use.

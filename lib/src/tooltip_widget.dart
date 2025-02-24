@@ -28,9 +28,15 @@ import 'enum.dart';
 import 'get_position.dart';
 import 'measure_size.dart';
 import 'models/tooltip_action_config.dart';
+import 'tooltip_position_config.dart';
 import 'widget/action_widget.dart';
 import 'widget/floating_action_widget.dart';
 import 'widget/tooltip_slide_transition.dart';
+
+const kDefaultArrowWidth = 18.0;
+const kDefaultArrowHeight = 9.0;
+const kWithArrowToolTipPadding = 16.0;
+const kWithOutArrowToolTipPadding = 10.0;
 
 class ToolTipWidget extends StatefulWidget {
   final GetPosition? position;
@@ -120,20 +126,19 @@ class _ToolTipWidgetState extends State<ToolTipWidget>
     with TickerProviderStateMixin {
   Offset? position;
 
-  bool isArrowUp = false;
+  bool get shouldShowActionsOutside =>
+      widget.tooltipActions.isNotEmpty &&
+      widget.tooltipActionConfig.position.isOutside;
 
   late final AnimationController _movingAnimationController;
   late final Animation<double> _movingAnimation;
   late final AnimationController _scaleAnimationController;
   late final Animation<double> _scaleAnimation;
 
-  double tooltipWidth = 0;
+  late TooltipPositionConfig config;
 
   // This is Default height considered at the start of this package
-  double tooltipHeight = 120;
-
-  final _withArrowToolTipPadding = 16.0;
-  final _withOutArrowToolTipPadding = 10.0;
+  var tooltipSize = const Size(0, 120);
 
   // To store Tooltip action size
   Size? _tooltipActionSize;
@@ -144,11 +149,18 @@ class _ToolTipWidgetState extends State<ToolTipWidget>
   bool isSizeRecalculating = false;
 
   TooltipPosition findPositionForContent(Offset position) {
-    var height = tooltipHeight;
-    final bottomPosition =
-        position.dy + ((widget.position?.getHeight() ?? 0) / 2);
-    final topPosition = position.dy - ((widget.position?.getHeight() ?? 0) / 2);
-    final hasSpaceInTop = topPosition >= height;
+    if (widget.tooltipPosition != null) return widget.tooltipPosition!;
+
+    final widgetPosition = widget.position;
+    final screenSize = widget.screenSize ?? MediaQuery.of(context).size;
+    final verticalPositionCenter = (widget.position?.getHeight() ?? 0) * 0.5;
+
+    final arrowHeight = widget.showArrow
+        ? kWithArrowToolTipPadding
+        : kWithOutArrowToolTipPadding;
+    var height =
+        tooltipSize.height + arrowHeight + widget.toolTipSlideEndDistance;
+
     // TODO: need to update for flutter version > 3.8.X
     // ignore: deprecated_member_use
     final EdgeInsets viewInsets = EdgeInsets.fromWindowPadding(
@@ -157,14 +169,35 @@ class _ToolTipWidgetState extends State<ToolTipWidget>
       // ignore: deprecated_member_use
       WidgetsBinding.instance.window.devicePixelRatio,
     );
-    final double actualVisibleScreenHeight =
-        widget.screenSize.height - viewInsets.bottom;
+    final actualVisibleScreenHeight = screenSize.height - viewInsets.bottom;
+
+    final bottomPosition = position.dy + verticalPositionCenter;
     final hasSpaceInBottom =
         (actualVisibleScreenHeight - bottomPosition) >= height;
-    return widget.tooltipPosition ??
-        (hasSpaceInTop && !hasSpaceInBottom
-            ? TooltipPosition.top
-            : TooltipPosition.bottom);
+
+    if (hasSpaceInBottom) return TooltipPosition.bottom;
+
+    final topPosition = position.dy - verticalPositionCenter;
+    final hasSpaceInTop = topPosition >= height;
+
+    if (hasSpaceInTop) return TooltipPosition.top;
+
+    if (widgetPosition == null) return TooltipPosition.bottom;
+
+    // TODO: consider arrow and it's padding in the calculation as well.
+    final tooltipWidth = widget.container == null
+        ? tooltipSize.width
+        : widget.contentWidth ?? _customContainerSize.value.width;
+
+    final leftPosition = widgetPosition.getLeft();
+    final hasSpaceInLeft = !((leftPosition - tooltipWidth).isNegative);
+    if (hasSpaceInLeft) return TooltipPosition.left;
+
+    final rightPosition = widgetPosition.getRight();
+    final hasSpaceInRight = (rightPosition + tooltipWidth) < screenSize.width;
+    if (hasSpaceInRight) return TooltipPosition.right;
+
+    return TooltipPosition.bottom;
   }
 
   /// This will calculate the width and height of the tooltip
@@ -185,10 +218,7 @@ class _ToolTipWidgetState extends State<ToolTipWidget>
         // the first frame is drawn
         isSizeRecalculating = true;
         WidgetsBinding.instance.addPostFrameCallback((timeStamp) {
-          if (mounted) {
-            _getTooltipSize();
-            setState(() {});
-          }
+          if (mounted) setState(_getTooltipSize);
         });
         // If size is calculated once then we will wait for first frame
         // to draw before calculating anything as that may cause a flicker
@@ -198,19 +228,15 @@ class _ToolTipWidgetState extends State<ToolTipWidget>
         }
       }
     }
+
+    final textTheme = Theme.of(context).textTheme;
     final titleStyle = widget.titleTextStyle ??
-        Theme.of(context)
-            .textTheme
-            .titleLarge!
-            .merge(TextStyle(color: widget.textColor));
+        textTheme.titleLarge!.merge(TextStyle(color: widget.textColor));
     final descriptionStyle = widget.descTextStyle ??
-        Theme.of(context)
-            .textTheme
-            .titleSmall!
-            .merge(TextStyle(color: widget.textColor));
+        textTheme.titleSmall!.merge(TextStyle(color: widget.textColor));
 
     // This is to calculate the size of the title text
-    // We have passed padding so we get the perfect width of the Title
+    // We have passed padding so we get the accurate width of the Title
     final titleSize = _textSize(
       widget.title,
       titleStyle,
@@ -218,12 +244,13 @@ class _ToolTipWidgetState extends State<ToolTipWidget>
     );
 
     // This is to calculate the size of the description text
-    // We have passed padding so we get the perfect width of the Title
+    // We have passed padding so we get the accurate width of the description
     final descriptionSize = _textSize(
       widget.description,
       descriptionStyle,
       widget.descriptionPadding,
     );
+
     final titleLength = titleSize?.width ?? 0;
     final descriptionLength = descriptionSize?.width ?? 0;
     // This is padding we will have around the tooltip text
@@ -237,6 +264,7 @@ class _ToolTipWidgetState extends State<ToolTipWidget>
     final availableSpaceForToolTip =
         widget.screenSize.width - (2 * widget.toolTipMargin);
 
+    var tooltipWidth = 0.0;
     // if Width is greater than available size which won't happen we will
     // adjust it to stay in available size
     if (maxToolTipWidth > availableSpaceForToolTip) {
@@ -258,106 +286,46 @@ class _ToolTipWidgetState extends State<ToolTipWidget>
       tooltipWidth = max(toolTipActionSize?.width ?? 0, widget.contentWidth!);
     }
 
-    final arrowHeight = widget.showArrow
-        ? _withArrowToolTipPadding
-        : _withOutArrowToolTipPadding;
     // To calculate the tooltip height
     // Text height + padding above and below of text  + arrow height + extra
     // space provided between target widget and tooltip widget  +
     // tooltip slide end distance + toolTip action Size
-
-    tooltipHeight = (widget.tooltipPadding ?? zeroPadding).vertical +
+    var tooltipHeight = (widget.tooltipPadding ?? zeroPadding).vertical +
         (titleSize?.height ?? 0) +
         (descriptionSize?.height ?? 0) +
-        arrowHeight +
-        widget.toolTipSlideEndDistance +
         (toolTipActionSize?.height ??
             widget.tooltipActionConfig.gapBetweenContentAndAction) +
         (widget.contentHeight ?? 0);
-  }
 
-  double? _getLeft() {
-    if (widget.position != null) {
-      final width =
-          widget.container != null ? _customContainerWidth.value : tooltipWidth;
-      double leftPositionValue = widget.position!.getCenter() - (width * 0.5);
-      if ((leftPositionValue + width) > widget.screenSize.width) {
-        return null;
-      } else if ((leftPositionValue) < widget.toolTipMargin) {
-        return widget.toolTipMargin;
-      } else {
-        return leftPositionValue;
-      }
-    }
-    return null;
-  }
-
-  double? _getRight() {
-    if (widget.position != null) {
-      final width =
-          widget.container != null ? _customContainerWidth.value : tooltipWidth;
-
-      final left = _getLeft();
-      if (left == null || (left + width) > widget.screenSize.width) {
-        final rightPosition = widget.position!.getCenter() + (width * 0.5);
-
-        return (rightPosition + width) > widget.screenSize.width
-            ? widget.toolTipMargin
-            : null;
-      } else {
-        return null;
-      }
-    }
-    return null;
+    tooltipSize = Size(tooltipWidth, tooltipHeight);
   }
 
   double _getSpace() {
-    var space = widget.position!.getCenter() - (tooltipWidth / 2);
+    final tooltipWidth = tooltipSize.width;
+    var space = widget.position!.getCenter() - (tooltipWidth * 0.5);
     if (space + tooltipWidth > widget.screenSize.width) {
       space = widget.screenSize.width - tooltipWidth - 8;
-    } else if (space < (tooltipWidth / 2)) {
+    } else if (space < (tooltipWidth * 0.5)) {
       space = 16;
     }
     return space;
   }
 
-  double _getAlignmentX() {
-    final calculatedLeft = _getLeft();
-    var left = calculatedLeft == null
-        ? 0
-        : (widget.position!.getCenter() - calculatedLeft);
-    var right = _getLeft() == null
-        ? (widget.screenSize.width - widget.position!.getCenter()) -
-            (_getRight() ?? 0)
-        : 0;
-    final containerWidth =
-        widget.container != null ? _customContainerWidth.value : tooltipWidth;
-
-    if (left != 0) {
-      return (-1 + (2 * (left / containerWidth)));
-    } else {
-      return (1 - (2 * (right / containerWidth)));
-    }
-  }
-
-  double _getAlignmentY() => -1;
-
   final GlobalKey _customContainerKey = GlobalKey();
   final GlobalKey _actionWidgetKey = GlobalKey();
-  final ValueNotifier<double> _customContainerWidth = ValueNotifier<double>(1);
+  final ValueNotifier<Size> _customContainerSize = ValueNotifier(Size.zero);
 
   @override
   void initState() {
     super.initState();
     WidgetsBinding.instance.addPostFrameCallback((_) {
       if (widget.container != null &&
-          _customContainerKey.currentContext != null &&
           _customContainerKey.currentContext?.size != null) {
         // TODO: Is it wise to call setState here? All it is doing is setting
         // a value in ValueNotifier which does not require a setState to refresh anyway.
         setState(() {
-          _customContainerWidth.value =
-              _customContainerKey.currentContext!.size!.width;
+          _customContainerSize.value =
+              _customContainerKey.currentContext!.size!;
         });
       }
     });
@@ -437,36 +405,34 @@ class _ToolTipWidgetState extends State<ToolTipWidget>
   Widget build(BuildContext context) {
     // TODO: maybe all this calculation doesn't need to run here. Maybe all or some of it can be moved outside?
     position = widget.offset;
-    final contentOrientation = findPositionForContent(position!);
-    final contentOffsetMultiplier =
-        contentOrientation == TooltipPosition.bottom ? 1.0 : -1.0;
-    isArrowUp = contentOffsetMultiplier == 1.0;
+    config = getConfiguration(findPositionForContent(position!))..initialize();
 
-    final screenSize = MediaQuery.of(context).size;
-
-    var contentY = isArrowUp
-        ? widget.position!.getBottom() + (contentOffsetMultiplier * 3)
-        : widget.position!.getTop() + (contentOffsetMultiplier * 3);
-
-    // if tooltip is going out of screen in bottom this will ensure it is
-    // visible above the widget
-    if (contentY + tooltipHeight >= screenSize.height && isArrowUp) {
-      contentY = screenSize.height - tooltipHeight;
-    }
-
-    final num contentFractionalOffset =
-        contentOffsetMultiplier.clamp(-1.0, 0.0);
-
-    var paddingTop = isArrowUp ? _withArrowToolTipPadding : 0.0;
-    var paddingBottom = isArrowUp ? 0.0 : _withArrowToolTipPadding;
-
-    if (!widget.showArrow) {
-      paddingTop = _withOutArrowToolTipPadding;
-      paddingBottom = _withOutArrowToolTipPadding;
-    }
-
-    const arrowWidth = 18.0;
-    const arrowHeight = 9.0;
+    // final contentOrientation = findPositionForContent(position!);
+    // final contentOffsetMultiplier = config.position.isBottom ? 1.0 : -1.0;
+    // isArrowUp = contentOffsetMultiplier == 1.0;
+    //
+    // final screenSize = MediaQuery.of(context).size;
+    //
+    // var contentY = isArrowUp
+    //     ? widget.position!.getBottom() + (contentOffsetMultiplier * 3)
+    //     : widget.position!.getTop() + (contentOffsetMultiplier * 3);
+    //
+    // // if tooltip is going out of screen in bottom this will ensure it is
+    // // visible above the widget
+    // if (contentY + tooltipSize.height >= screenSize.height && isArrowUp) {
+    //   contentY = screenSize.height - tooltipSize.height;
+    // }
+    //
+    // final num contentFractionalOffset =
+    //     contentOffsetMultiplier.clamp(-1.0, 0.0);
+    //
+    // var paddingTop = isArrowUp ? _withArrowToolTipPadding : 0.0;
+    // var paddingBottom = isArrowUp ? 0.0 : _withArrowToolTipPadding;
+    //
+    // if (!widget.showArrow) {
+    //   paddingTop = _withOutArrowToolTipPadding;
+    //   paddingBottom = _withOutArrowToolTipPadding;
+    // }
 
     if (!widget.disableScaleAnimation && widget.isTooltipDismissed) {
       _scaleAnimationController.reverse();
@@ -474,48 +440,28 @@ class _ToolTipWidgetState extends State<ToolTipWidget>
 
     if (widget.container == null) {
       final defaultToolTipWidget = Positioned(
-        top: contentY,
-        left: _getLeft(),
-        right: _getRight(),
+        top: config.topPosition,
+        left: config.leftPosition,
+        right: config.rightPosition,
         child: ScaleTransition(
           scale: _scaleAnimation,
-          alignment: widget.scaleAnimationAlignment ??
-              Alignment(
-                _getAlignmentX(),
-                _getAlignmentY(),
-              ),
+          alignment: widget.scaleAnimationAlignment ?? config.scaleAnimAlign,
           child: FractionalTranslation(
-            translation: Offset(0.0, contentFractionalOffset as double),
+            translation: config.fractionalTranslation,
             child: ToolTipSlideTransition(
-              position: Tween<Offset>(
-                begin: Offset.zero,
-                end: Offset(
-                  0,
-                  widget.toolTipSlideEndDistance * contentOffsetMultiplier,
-                ),
-              ).animate(_movingAnimation),
+              position: config.slideTween.animate(_movingAnimation),
               child: Material(
                 type: MaterialType.transparency,
                 child: Column(
                   children: [
-                    if (widget.tooltipActions.isNotEmpty &&
-                        widget.tooltipActionConfig.position.isOutside &&
-                        !isArrowUp)
+                    if (shouldShowActionsOutside && config.position.isTop)
                       _getActionWidget(),
                     Padding(
-                      padding: widget.showArrow
-                          ? EdgeInsets.only(
-                              top: paddingTop - (isArrowUp ? arrowHeight : 0),
-                              bottom:
-                                  paddingBottom - (isArrowUp ? 0 : arrowHeight),
-                            )
-                          : zeroPadding,
+                      padding:
+                          widget.showArrow ? config.arrowPadding : zeroPadding,
                       child: Stack(
-                        alignment: isArrowUp
-                            ? Alignment.topLeft
-                            : _getLeft() == null
-                                ? Alignment.bottomRight
-                                : Alignment.bottomLeft,
+                        alignment: config.alignment,
+                        clipBehavior: Clip.none,
                         children: [
                           // This widget is used for calculation of the action
                           // widget size and it will be removed once the size
@@ -523,33 +469,37 @@ class _ToolTipWidgetState extends State<ToolTipWidget>
                           if (isSizeRecalculating) _getOffstageActionWidget,
                           if (widget.showArrow)
                             Positioned(
-                              left: _getArrowLeft(arrowWidth),
-                              right: _getArrowRight(arrowWidth),
+                              left: config.arrowLeft,
+                              right: config.arrowRight,
                               child: CustomPaint(
                                 painter: _Arrow(
                                   strokeColor: widget.tooltipBackgroundColor!,
                                   strokeWidth: 10,
                                   paintingStyle: PaintingStyle.fill,
-                                  isUpArrow: isArrowUp,
+                                  position: config.position,
                                 ),
-                                child: const SizedBox(
-                                  height: arrowHeight,
-                                  width: arrowWidth,
-                                ),
+                                child: config.position.isVertical
+                                    ? const SizedBox(
+                                        height: kDefaultArrowHeight,
+                                        width: kDefaultArrowWidth,
+                                      )
+                                    : const SizedBox(
+                                        height: kDefaultArrowWidth,
+                                        width: kDefaultArrowHeight,
+                                      ),
                               ),
                             ),
                           Padding(
-                            padding: EdgeInsets.only(
-                              top: isArrowUp ? arrowHeight - 1 : 0,
-                              bottom: isArrowUp ? 0 : arrowHeight - 1,
-                            ),
+                            padding: widget.showArrow
+                                ? config.padding
+                                : EdgeInsets.zero,
                             child: ClipRRect(
                               borderRadius: widget.tooltipBorderRadius ??
                                   BorderRadius.circular(8.0),
                               child: GestureDetector(
                                 onTap: widget.onTooltipTap,
                                 child: Container(
-                                  width: tooltipWidth,
+                                  width: tooltipSize.width,
                                   padding: widget.tooltipPadding?.copyWith(
                                     left: 0,
                                     right: 0,
@@ -642,10 +592,10 @@ class _ToolTipWidgetState extends State<ToolTipWidget>
                         ],
                       ),
                     ),
-                    if (widget.tooltipActions.isNotEmpty &&
-                            widget.tooltipActionConfig.position.isOutside &&
-                            isArrowUp ||
-                        (_tooltipActionSize == null && isArrowUp))
+                    if (shouldShowActionsOutside &&
+                        (_tooltipActionSize == null ||
+                            config.position.isHorizontal ||
+                            config.position.isBottom))
                       _getActionWidget(),
                   ],
                 ),
@@ -672,26 +622,24 @@ class _ToolTipWidgetState extends State<ToolTipWidget>
       fit: StackFit.expand,
       children: <Widget>[
         Positioned(
-          left: _getSpace(),
-          top: contentY,
+          top: (config.topPosition ?? 10) -
+              (config.position.isVertical ? 10 : 0),
+          left: config.position.isVertical ? _getSpace() : config.leftPosition,
+          right: config.position.isVertical ? null : config.rightPosition,
           child: FractionalTranslation(
-            translation: Offset(0.0, contentFractionalOffset as double),
+            translation: config.fractionalTranslation,
             child: ToolTipSlideTransition(
-              position: Tween<Offset>(
-                begin: Offset.zero,
-                end: Offset(
-                  0,
-                  widget.toolTipSlideEndDistance * contentOffsetMultiplier,
-                ),
-              ).animate(_movingAnimation),
+              position: config.slideTween.animate(_movingAnimation),
               child: Material(
                 color: Colors.transparent,
                 child: GestureDetector(
                   onTap: widget.onTooltipTap,
                   child: Container(
                     padding: EdgeInsets.only(
-                      top: paddingTop,
-                      bottom: paddingBottom,
+                      top: config.position.isTop ? 0 : kWithArrowToolTipPadding,
+                      bottom: config.position.isBottom
+                          ? 0
+                          : kWithArrowToolTipPadding,
                     ),
                     color: Colors.transparent,
                     child: Center(
@@ -703,31 +651,31 @@ class _ToolTipWidgetState extends State<ToolTipWidget>
                           // We have kept it in colum because if we put is
                           // outside in the stack then it will take whole
                           // screen size and width calculation will fail
-                          if (isSizeRecalculating) _getOffstageActionWidget,
-
-                          // This offset is used to make animation smoother
-                          // when there is big action widget which make
-                          // the tool tip to change it's position
-                          Offstage(
-                            offstage: isSizeRecalculating,
-                            child: SizedBox(
-                              width: tooltipWidth,
+                          if (isSizeRecalculating)
+                            _getOffstageActionWidget
+                          else
+                            // This offset is used to make animation smoother
+                            // when there is big action widget which make
+                            // the tool tip to change it's position
+                            SizedBox(
+                              width: tooltipSize.width,
                               child: Column(
                                 children: [
                                   if (widget.tooltipActions.isNotEmpty &&
-                                      !isArrowUp)
+                                      config.position.isTop)
                                     _getActionWidget(),
                                   MeasureSize(
+                                    key: _customContainerKey,
                                     onSizeChange: onSizeChange,
                                     child: widget.container,
                                   ),
                                   if (widget.tooltipActions.isNotEmpty &&
-                                      isArrowUp)
+                                      (config.position.isHorizontal ||
+                                          config.position.isBottom))
                                     _getActionWidget(),
                                 ],
                               ),
                             ),
-                          ),
                         ],
                       ),
                     ),
@@ -756,7 +704,7 @@ class _ToolTipWidgetState extends State<ToolTipWidget>
           alignment: widget.tooltipActionConfig.alignment,
           width: null,
           crossAxisAlignment: widget.tooltipActionConfig.crossAxisAlignment,
-          isArrowUp: true,
+          tooltipPosition: TooltipPosition.top,
           children: widget.tooltipActions,
         ),
       );
@@ -766,7 +714,7 @@ class _ToolTipWidgetState extends State<ToolTipWidget>
   }) {
     return ActionWidget(
       tooltipActionConfig: widget.tooltipActionConfig,
-      outSidePadding: (insideWidget)
+      outSidePadding: insideWidget
           ? EdgeInsets.only(
               left: widget.tooltipPadding?.left ?? 0,
               right: widget.tooltipPadding?.right ?? 0,
@@ -774,8 +722,10 @@ class _ToolTipWidgetState extends State<ToolTipWidget>
           : zeroPadding,
       alignment: widget.tooltipActionConfig.alignment,
       crossAxisAlignment: widget.tooltipActionConfig.crossAxisAlignment,
-      width: _tooltipActionSize == null ? null : tooltipWidth,
-      isArrowUp: insideWidget || isArrowUp,
+      width: _tooltipActionSize == null ? null : tooltipSize.width,
+      tooltipPosition: insideWidget || config.position.isHorizontal
+          ? TooltipPosition.bottom
+          : config.position,
       children: widget.tooltipActions,
     );
   }
@@ -823,61 +773,81 @@ class _ToolTipWidgetState extends State<ToolTipWidget>
     return textPainter.size;
   }
 
-  double? _getArrowLeft(double arrowWidth) {
-    final left = _getLeft();
-    if (left == null) return null;
-    return (widget.position!.getCenter() - (arrowWidth / 2) - left);
-  }
-
-  double? _getArrowRight(double arrowWidth) {
-    if (_getLeft() != null) return null;
-    return (widget.screenSize.width - widget.position!.getCenter()) -
-        (_getRight() ?? 0) -
-        (arrowWidth / 2);
+  TooltipPositionConfig getConfiguration(TooltipPosition location) {
+    return TooltipPositionConfig(
+      position: location,
+      size: widget.container == null ? tooltipSize : _customContainerSize.value,
+      screenSize: widget.screenSize ?? MediaQuery.of(context).size,
+      actionSize: _tooltipActionSize,
+      widgetRect: widget.position?.getRect(),
+      tooltipMargin: widget.toolTipMargin,
+      tooltipPadding: widget.tooltipPadding,
+      toolTipSlideEndDistance: widget.toolTipSlideEndDistance,
+    );
   }
 }
 
 class _Arrow extends CustomPainter {
-  final Color strokeColor;
-  final PaintingStyle paintingStyle;
-  final double strokeWidth;
-  final bool isUpArrow;
-  final Paint _paint;
-
+  /// Paints an Arrow to point towards the showcased widget.
+  ///
+  /// The pointed head of the arrow would be in the opposite direction of the
+  /// tooltip [position].
   _Arrow({
     this.strokeColor = Colors.black,
     this.strokeWidth = 3,
     this.paintingStyle = PaintingStyle.stroke,
-    this.isUpArrow = true,
+    this.position = TooltipPosition.bottom,
   }) : _paint = Paint()
           ..color = strokeColor
           ..strokeWidth = strokeWidth
           ..style = paintingStyle;
 
+  final Color strokeColor;
+  final PaintingStyle paintingStyle;
+  final double strokeWidth;
+  final TooltipPosition position;
+  final Paint _paint;
+
   @override
-  void paint(Canvas canvas, Size size) {
-    canvas.drawPath(getTrianglePath(size.width, size.height), _paint);
-  }
+  void paint(Canvas canvas, Size size) => canvas.drawPath(
+        getTrianglePath(size.width, size.height),
+        _paint,
+      );
 
   Path getTrianglePath(double x, double y) {
-    if (isUpArrow) {
-      return Path()
-        ..moveTo(0, y)
-        ..lineTo(x / 2, 0)
-        ..lineTo(x, y)
-        ..lineTo(0, y);
+    switch (position) {
+      case TooltipPosition.bottom:
+        return Path()
+          ..moveTo(0, y)
+          ..lineTo(x * 0.5, 0)
+          ..lineTo(x, y)
+          ..lineTo(0, y);
+      case TooltipPosition.top:
+        return Path()
+          ..moveTo(0, 0)
+          ..lineTo(x, 0)
+          ..lineTo(x * 0.5, y)
+          ..lineTo(0, 0);
+      case TooltipPosition.left:
+        return Path()
+          ..moveTo(0, 0)
+          ..lineTo(x, y * 0.5)
+          ..lineTo(0, y)
+          ..lineTo(0, 0);
+      case TooltipPosition.right:
+        return Path()
+          ..moveTo(x, 0)
+          ..lineTo(0, y * 0.5)
+          ..lineTo(x, y)
+          ..lineTo(x, 0);
     }
-    return Path()
-      ..moveTo(0, 0)
-      ..lineTo(x, 0)
-      ..lineTo(x / 2, y)
-      ..lineTo(0, 0);
   }
 
   @override
   bool shouldRepaint(covariant _Arrow oldDelegate) {
     return oldDelegate.strokeColor != strokeColor ||
         oldDelegate.paintingStyle != paintingStyle ||
-        oldDelegate.strokeWidth != strokeWidth;
+        oldDelegate.strokeWidth != strokeWidth ||
+        oldDelegate.position != position;
   }
 }

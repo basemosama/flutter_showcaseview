@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 
-import '../../showcaseview.dart';
+import '../enum.dart';
+import '../models/tooltip_action_config.dart';
 
 class ActionWidget extends StatelessWidget {
   const ActionWidget({
@@ -9,7 +10,7 @@ class ActionWidget extends StatelessWidget {
     required this.tooltipActionConfig,
     required this.alignment,
     required this.crossAxisAlignment,
-    required this.isArrowUp,
+    required this.tooltipPosition,
     this.outSidePadding = EdgeInsets.zero,
     this.width,
   });
@@ -20,13 +21,17 @@ class ActionWidget extends StatelessWidget {
   final MainAxisAlignment alignment;
   final CrossAxisAlignment crossAxisAlignment;
   final EdgeInsets outSidePadding;
-  final bool isArrowUp;
+  final TooltipPosition tooltipPosition;
 
   @override
   Widget build(BuildContext context) {
     final getWidgetPadding = EdgeInsets.only(
-      top: isArrowUp ? tooltipActionConfig.gapBetweenContentAndAction : 0.0,
-      bottom: !isArrowUp ? tooltipActionConfig.gapBetweenContentAndAction : 0.0,
+      top: tooltipPosition.isBottom
+          ? tooltipActionConfig.gapBetweenContentAndAction
+          : 0.0,
+      bottom: tooltipPosition.isTop
+          ? tooltipActionConfig.gapBetweenContentAndAction
+          : 0.0,
     ).add(outSidePadding);
 
     return SizedBox(

@@ -22,7 +22,24 @@
 
 import 'showcase_widget.dart';
 
-enum TooltipPosition { top, bottom }
+enum TooltipPosition {
+  left,
+  top,
+  right,
+  bottom;
+
+  bool get isLeft => this == left;
+
+  bool get isTop => this == top;
+
+  bool get isRight => this == right;
+
+  bool get isBottom => this == bottom;
+
+  bool get isVertical => isTop || isBottom;
+
+  bool get isHorizontal => isRight || isLeft;
+}
 
 enum TooltipActionPosition {
   outside,
