@@ -619,12 +619,12 @@ class _ShowcaseState extends State<Showcase> {
       _showShowCase = activeStep == widget.key || _isLinkedShowCaseStarted;
     });
 
-    if (activeStep == widget.key) {
+    if (activeStep == widget.key || _isLinkedShowCaseStarted) {
       if (widget.enableAutoScroll ?? showCaseWidgetState.enableAutoScroll) {
         _scrollIntoView();
       }
 
-      if (showCaseWidgetState.autoPlay) {
+      if (showCaseWidgetState.autoPlay && !_isLinkedShowCaseStarted) {
         timer = Timer(
             Duration(seconds: showCaseWidgetState.autoPlayDelay.inSeconds),
             _nextIfAny);
@@ -738,14 +738,22 @@ class _ShowcaseState extends State<Showcase> {
     } else if (timer != null && !timer!.isActive) {
       timer = null;
     }
-    await _reverseAnimateTooltip();
-    if (showCaseWidgetState.isShowCaseCompleted) return;
+    await _connectedReverseAnimatedToolTip();
+    if ((showCaseWidgetState.isShowCaseCompleted || _isLinkedShowCaseStarted) &&
+        mounted) {
+      final activeWidgetState =
+          ShowCaseWidget.activeTargetWidget(context)?.currentState;
+      if (activeWidgetState is _ShowcaseState) {
+        activeWidgetState._nextIfAny();
+      }
+      return;
+    }
     showCaseWidgetState.completed(widget.key);
   }
 
   Future<void> _getOnTargetTap() async {
     if (widget.disposeOnTap == true) {
-      await _reverseAnimateTooltip();
+      await _connectedReverseAnimatedToolTip();
       showCaseWidgetState.dismiss();
       widget.onTargetClick!();
     } else {
@@ -755,7 +763,7 @@ class _ShowcaseState extends State<Showcase> {
 
   Future<void> _getOnTooltipTap() async {
     if (widget.disposeOnTap == true) {
-      await _reverseAnimateTooltip();
+      await _connectedReverseAnimatedToolTip();
       showCaseWidgetState.dismiss();
     }
     widget.onToolTipClick?.call();
@@ -768,6 +776,29 @@ class _ShowcaseState extends State<Showcase> {
     setState(() => _isTooltipDismissed = true);
     await Future<dynamic>.delayed(widget.scaleAnimationDuration);
     _isTooltipDismissed = false;
+  }
+
+  /// This function is used to maintain multiple showcase on Target tap
+  /// animation and also used to manages how to move to next step from parent
+  /// function Here is logic: if this widget showcase is stated by parent so
+  /// [_isLinkedShowCaseStarted] will be true so in that case we will call the onTarget tap of the parent widget
+  Future<void> _connectedReverseAnimatedToolTip() async {
+    if (_isLinkedShowCaseStarted) {
+      final activeWidgetState =
+          ShowCaseWidget.activeTargetWidget(context)?.currentState;
+      if (activeWidgetState is _ShowcaseState) {
+        activeWidgetState._connectedReverseAnimatedToolTip();
+      }
+    } else {
+      var futureList = <Future>[_reverseAnimateTooltip()];
+      for (final keys in widget.connectedShowcaseKeys) {
+        final state = keys.currentState;
+        if (state is _ShowcaseState) {
+          futureList.add(state._reverseAnimateTooltip());
+        }
+      }
+      await Future.wait(futureList);
+    }
   }
 
   Widget buildOverlayOnTarget(

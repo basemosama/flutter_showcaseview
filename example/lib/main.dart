@@ -118,8 +118,8 @@ class _MailPageState extends State<MailPage> {
     super.initState();
     //Start showcase view after current widget frames are drawn.
     WidgetsBinding.instance.addPostFrameCallback(
-      (_) => ShowCaseWidget.of(context).startShowCase(
-          [_firstShowcaseWidget, _two, _three, _four, _lastShowcaseWidget]),
+      (_) => ShowCaseWidget.of(context)
+          .startShowCase([_two, _three, _four, _lastShowcaseWidget]),
     );
     mails = [
       Mail(
@@ -285,7 +285,11 @@ class _MailPageState extends State<MailPage> {
                     Showcase(
                       targetPadding: const EdgeInsets.all(5),
                       key: _two,
-                      connectedShowcaseKeys: [_lastShowcaseWidget, _four],
+                      connectedShowcaseKeys: [
+                        _lastShowcaseWidget,
+                        _four,
+                        _firstShowcaseWidget
+                      ],
                       title: 'Profile',
                       description:
                           "Tap to see profile which contains user's name, profile picture, mobile number and country",
