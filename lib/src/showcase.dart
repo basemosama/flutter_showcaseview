@@ -300,6 +300,9 @@ class Showcase extends StatefulWidget {
   /// for this showcase.
   final bool? enableAutoScroll;
 
+  /// This keys will be used to show multiple showcase widget
+  final List<GlobalKey> connectedShowcaseKeys;
+
   /// Highlights a specific widget on the screen with an informative tooltip.
   ///
   /// This widget helps you showcase specific parts of your UI by drawing an
@@ -421,6 +424,7 @@ class Showcase extends StatefulWidget {
     this.scrollAlignment = 0.5,
     this.enableAutoScroll,
     this.floatingActionWidget,
+    this.connectedShowcaseKeys = const <GlobalKey>[],
   })  : height = null,
         width = null,
         container = null,
@@ -519,6 +523,7 @@ class Showcase extends StatefulWidget {
     this.tooltipActionConfig,
     this.scrollAlignment = 0.5,
     this.enableAutoScroll,
+    this.connectedShowcaseKeys = const <GlobalKey>[],
   })  : showArrow = false,
         onToolTipClick = null,
         scaleAnimationDuration = const Duration(milliseconds: 300),
@@ -556,6 +561,7 @@ class _ShowcaseState extends State<Showcase> {
   bool _isScrollRunning = false;
   bool _isTooltipDismissed = false;
   bool _enableShowcase = true;
+  bool _isLinkedShowCaseStarted = false;
   Timer? timer;
   GetPosition? position;
   Size? rootWidgetSize;
@@ -563,6 +569,12 @@ class _ShowcaseState extends State<Showcase> {
 
   late final showCaseWidgetState = ShowCaseWidget.of(context);
   FloatingActionWidget? _globalFloatingActionWidget;
+
+  bool get isCircle => widget.targetShapeBorder is CircleBorder;
+
+  BorderRadius? get targetBorderRadius => widget.targetBorderRadius;
+
+  EdgeInsets get targetPadding => widget.targetPadding;
 
   @override
   void initState() {
@@ -576,6 +588,8 @@ class _ShowcaseState extends State<Showcase> {
     _enableShowcase = showCaseWidgetState.enableShowcase;
 
     recalculateRootWidgetSize();
+    showCaseWidgetState.linkedShowcaseMap[widget.key] =
+        widget.connectedShowcaseKeys;
 
     if (_enableShowcase) {
       _globalFloatingActionWidget =
@@ -595,8 +609,14 @@ class _ShowcaseState extends State<Showcase> {
   /// show overlay if there is any target widget
   void showOverlay() {
     final activeStep = ShowCaseWidget.activeTargetWidget(context);
+    final data = showCaseWidgetState.linkedShowcaseMap[activeStep];
+    if (data?.contains(widget.key) ?? false) {
+      _isLinkedShowCaseStarted = true;
+    } else {
+      _isLinkedShowCaseStarted = false;
+    }
     setState(() {
-      _showShowCase = activeStep == widget.key;
+      _showShowCase = activeStep == widget.key || _isLinkedShowCaseStarted;
     });
 
     if (activeStep == widget.key) {
@@ -645,7 +665,33 @@ class _ShowcaseState extends State<Showcase> {
             screenWidth: size.width,
             screenHeight: size.height,
           );
-          return buildOverlayOnTarget(offset, rectBound.size, rectBound, size);
+
+          final linkedKeys =
+              showCaseWidgetState.linkedShowcaseMap[widget.key] ?? [];
+          final linkedObjectData = <LinkedWidgetDataModel>[];
+          if (linkedKeys.isNotEmpty && !_isLinkedShowCaseStarted) {
+            for (final keys in linkedKeys) {
+              final rect = keys.globalPaintBounds;
+              final renderObjectState = keys.currentState;
+              if (renderObjectState is _ShowcaseState && rect != null) {
+                linkedObjectData.add(
+                  LinkedWidgetDataModel(
+                    overlayPadding: renderObjectState.targetPadding,
+                    radius: renderObjectState.targetBorderRadius,
+                    rect: rect,
+                    isCircle: renderObjectState.isCircle,
+                  ),
+                );
+              }
+            }
+          }
+          return buildOverlayOnTarget(
+            offset,
+            rectBound.size,
+            rectBound,
+            size,
+            linkedObjectData,
+          );
         },
         showOverlay: true,
         child: widget.child,
@@ -729,6 +775,7 @@ class _ShowcaseState extends State<Showcase> {
     Size size,
     Rect rectBound,
     Size screenSize,
+    List<LinkedWidgetDataModel> linkedWidgetData,
   ) {
     final mediaQuerySize = MediaQuery.of(context).size;
     var blur = 0.0;
@@ -744,28 +791,39 @@ class _ShowcaseState extends State<Showcase> {
 
     return Stack(
       children: [
-        GestureDetector(
-          onTap: () {
-            if (!showCaseWidgetState.disableBarrierInteraction &&
-                !widget.disableBarrierInteraction) {
-              _nextIfAny();
-            }
-            widget.onBarrierClick?.call();
-          },
-          child: ClipPath(
-            clipper: RRectClipper(
-              area: _isScrollRunning ? Rect.zero : rectBound,
-              isCircle: widget.targetShapeBorder is CircleBorder,
-              radius: _isScrollRunning
-                  ? BorderRadius.zero
-                  : widget.targetBorderRadius,
-              overlayPadding:
-                  _isScrollRunning ? EdgeInsets.zero : widget.targetPadding,
-            ),
-            child: blur != 0
-                ? BackdropFilter(
-                    filter: ImageFilter.blur(sigmaX: blur, sigmaY: blur),
-                    child: Container(
+        if (!_isLinkedShowCaseStarted)
+          GestureDetector(
+            onTap: () {
+              if (!showCaseWidgetState.disableBarrierInteraction &&
+                  !widget.disableBarrierInteraction) {
+                _nextIfAny();
+              }
+              widget.onBarrierClick?.call();
+            },
+            child: ClipPath(
+              clipper: RRectClipper(
+                area: _isScrollRunning ? Rect.zero : rectBound,
+                isCircle: widget.targetShapeBorder is CircleBorder,
+                radius: _isScrollRunning
+                    ? BorderRadius.zero
+                    : widget.targetBorderRadius,
+                overlayPadding:
+                    _isScrollRunning ? EdgeInsets.zero : widget.targetPadding,
+                linkedObjectData: linkedWidgetData,
+              ),
+              child: blur != 0
+                  ? BackdropFilter(
+                      filter: ImageFilter.blur(sigmaX: blur, sigmaY: blur),
+                      child: Container(
+                        width: mediaQuerySize.width,
+                        height: mediaQuerySize.height,
+                        decoration: BoxDecoration(
+                          color: widget.overlayColor
+                              .withOpacity(widget.overlayOpacity),
+                        ),
+                      ),
+                    )
+                  : Container(
                       width: mediaQuerySize.width,
                       height: mediaQuerySize.height,
                       decoration: BoxDecoration(
@@ -773,17 +831,8 @@ class _ShowcaseState extends State<Showcase> {
                             .withOpacity(widget.overlayOpacity),
                       ),
                     ),
-                  )
-                : Container(
-                    width: mediaQuerySize.width,
-                    height: mediaQuerySize.height,
-                    decoration: BoxDecoration(
-                      color: widget.overlayColor
-                          .withOpacity(widget.overlayOpacity),
-                    ),
-                  ),
+            ),
           ),
-        ),
         if (_isScrollRunning) Center(child: widget.scrollLoadingWidget),
         if (!_isScrollRunning) ...[
           _TargetWidget(
@@ -945,5 +994,19 @@ class _TargetWidget extends StatelessWidget {
         ),
       ),
     );
+  }
+}
+
+extension GlobalKeyExtension on GlobalKey {
+  Rect? get globalPaintBounds {
+    final renderObject = currentContext?.findRenderObject();
+    final matrix = renderObject?.getTransformTo(null);
+
+    if (matrix != null && renderObject?.paintBounds != null) {
+      final rect = MatrixUtils.transformRect(matrix, renderObject!.paintBounds);
+      return rect;
+    } else {
+      return null;
+    }
   }
 }

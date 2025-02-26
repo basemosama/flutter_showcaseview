@@ -29,12 +29,14 @@ class RRectClipper extends CustomClipper<ui.Path> {
   final BorderRadius? radius;
   final EdgeInsets overlayPadding;
   final Rect area;
+  final List<LinkedWidgetDataModel> linkedObjectData;
 
   RRectClipper({
     this.isCircle = false,
     this.radius,
     this.overlayPadding = EdgeInsets.zero,
     this.area = Rect.zero,
+    this.linkedObjectData = const <LinkedWidgetDataModel>[],
   });
 
   @override
@@ -49,7 +51,7 @@ class RRectClipper extends CustomClipper<ui.Path> {
       area.bottom + overlayPadding.bottom,
     );
 
-    return Path()
+    final mainObjectPath = Path()
       ..fillType = ui.PathFillType.evenOdd
       ..addRect(Offset.zero & size)
       ..addRRect(
@@ -61,6 +63,30 @@ class RRectClipper extends CustomClipper<ui.Path> {
           bottomRight: (radius?.bottomRight ?? customRadius),
         ),
       );
+
+    for (final widgetRect in linkedObjectData) {
+      final customRadius = widgetRect.isCircle
+          ? Radius.circular(widgetRect.rect.height)
+          : const Radius.circular(3.0);
+
+      final rect = Rect.fromLTRB(
+        widgetRect.rect.left - widgetRect.overlayPadding.left,
+        widgetRect.rect.top - widgetRect.overlayPadding.top,
+        widgetRect.rect.right + widgetRect.overlayPadding.right,
+        widgetRect.rect.bottom + widgetRect.overlayPadding.bottom,
+      );
+      mainObjectPath.addRRect(
+        RRect.fromRectAndCorners(
+          rect,
+          topLeft: (widgetRect.radius?.topLeft ?? customRadius),
+          topRight: (widgetRect.radius?.topRight ?? customRadius),
+          bottomLeft: (widgetRect.radius?.bottomLeft ?? customRadius),
+          bottomRight: (widgetRect.radius?.bottomRight ?? customRadius),
+        ),
+      );
+    }
+
+    return mainObjectPath;
   }
 
   @override
@@ -69,4 +95,18 @@ class RRectClipper extends CustomClipper<ui.Path> {
       radius != oldClipper.radius ||
       overlayPadding != oldClipper.overlayPadding ||
       area != oldClipper.area;
+}
+
+class LinkedWidgetDataModel {
+  final Rect rect;
+  final EdgeInsets overlayPadding;
+  final BorderRadius? radius;
+  final bool isCircle;
+
+  const LinkedWidgetDataModel({
+    required this.rect,
+    required this.radius,
+    required this.overlayPadding,
+    required this.isCircle,
+  });
 }

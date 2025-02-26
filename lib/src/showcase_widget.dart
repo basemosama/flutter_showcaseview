@@ -193,6 +193,8 @@ class ShowCaseWidgetState extends State<ShowCaseWidget> {
 
   late final List<TooltipActionButton>? globalTooltipActions;
 
+  Map<GlobalKey, List<GlobalKey>> linkedShowcaseMap = {};
+
   /// These properties are only here so that it can be accessed by
   /// [Showcase]
   bool get autoPlay => widget.autoPlay;
