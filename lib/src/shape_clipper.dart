@@ -51,7 +51,7 @@ class RRectClipper extends CustomClipper<ui.Path> {
       area.bottom + overlayPadding.bottom,
     );
 
-    final mainObjectPath = Path()
+    var mainObjectPath = Path()
       ..fillType = ui.PathFillType.evenOdd
       ..addRect(Offset.zero & size)
       ..addRRect(
@@ -75,14 +75,22 @@ class RRectClipper extends CustomClipper<ui.Path> {
         widgetRect.rect.right + widgetRect.overlayPadding.right,
         widgetRect.rect.bottom + widgetRect.overlayPadding.bottom,
       );
-      mainObjectPath.addRRect(
-        RRect.fromRectAndCorners(
-          rect,
-          topLeft: (widgetRect.radius?.topLeft ?? customRadius),
-          topRight: (widgetRect.radius?.topRight ?? customRadius),
-          bottomLeft: (widgetRect.radius?.bottomLeft ?? customRadius),
-          bottomRight: (widgetRect.radius?.bottomRight ?? customRadius),
-        ),
+
+      /// We have use this approach so that overlapping cutout will merge with
+      /// each other
+      mainObjectPath = Path.combine(
+        PathOperation.difference,
+        mainObjectPath,
+        Path()
+          ..addRRect(
+            RRect.fromRectAndCorners(
+              rect,
+              topLeft: (widgetRect.radius?.topLeft ?? customRadius),
+              topRight: (widgetRect.radius?.topRight ?? customRadius),
+              bottomLeft: (widgetRect.radius?.bottomLeft ?? customRadius),
+              bottomRight: (widgetRect.radius?.bottomRight ?? customRadius),
+            ),
+          ),
       );
     }
 
@@ -94,7 +102,8 @@ class RRectClipper extends CustomClipper<ui.Path> {
       isCircle != oldClipper.isCircle ||
       radius != oldClipper.radius ||
       overlayPadding != oldClipper.overlayPadding ||
-      area != oldClipper.area;
+      area != oldClipper.area ||
+      linkedObjectData != oldClipper.linkedObjectData;
 }
 
 class LinkedWidgetDataModel {

@@ -424,6 +424,11 @@ class _ToolTipWidgetState extends State<ToolTipWidget>
     if (!widget.isTooltipDismissed && oldWidget.hashCode != hashCode) {
       _getTooltipSize();
     }
+    if (!widget.isTooltipDismissed &&
+        (_scaleAnimationController.status.isDismissed ||
+            _scaleAnimationController.status == AnimationStatus.reverse)) {
+      _scaleAnimationController.forward();
+    }
   }
 
   @override

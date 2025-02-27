@@ -787,7 +787,7 @@ class _ShowcaseState extends State<Showcase> {
       final activeWidgetState =
           ShowCaseWidget.activeTargetWidget(context)?.currentState;
       if (activeWidgetState is _ShowcaseState) {
-        activeWidgetState._connectedReverseAnimatedToolTip();
+        await activeWidgetState._connectedReverseAnimatedToolTip();
       }
     } else {
       var futureList = <Future>[_reverseAnimateTooltip()];
