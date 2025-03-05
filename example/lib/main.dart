@@ -231,6 +231,7 @@ class _MailPageState extends State<MailPage> {
                                     Showcase(
                                       key: _firstShowcaseWidget,
                                       description: 'Tap to see menu options',
+                                      toolTipSlideEndDistance: 20,
                                       onBarrierClick: () {
                                         debugPrint('Barrier clicked');
                                         debugPrint(
@@ -243,6 +244,7 @@ class _MailPageState extends State<MailPage> {
                                           _lastShowcaseWidget
                                         ]);
                                       },
+                                      tooltipPosition: TooltipPosition.right,
                                       tooltipActionConfig:
                                           const TooltipActionConfig(
                                         alignment: MainAxisAlignment.end,
@@ -290,6 +292,7 @@ class _MailPageState extends State<MailPage> {
                           "Tap to see profile which contains user's name, profile picture, mobile number and country",
                       tooltipBackgroundColor: Theme.of(context).primaryColor,
                       textColor: Colors.white,
+                      tooltipPosition: TooltipPosition.left,
                       floatingActionWidget: FloatingActionWidget(
                         left: 16,
                         bottom: 16,
@@ -373,7 +376,7 @@ class _MailPageState extends State<MailPage> {
                 controller: scrollController,
                 physics: const BouncingScrollPhysics(),
                 itemBuilder: (context, index) {
-                  if (index == 0) {
+                  if (index == 4) {
                     return showcaseMailTile(_three, true, context, mails.first);
                   }
                   return MailTile(

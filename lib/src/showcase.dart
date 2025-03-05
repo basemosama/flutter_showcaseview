@@ -25,6 +25,7 @@ import 'dart:ui';
 
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
+import 'package:showcaseview/src/tooltip_widget2.dart';
 
 import 'enum.dart';
 import 'get_position.dart';
@@ -34,7 +35,6 @@ import 'models/tooltip_action_config.dart';
 import 'shape_clipper.dart';
 import 'showcase_widget.dart';
 import 'tooltip_action_button_widget.dart';
-import 'tooltip_widget.dart';
 import 'widget/floating_action_widget.dart';
 
 class Showcase extends StatefulWidget {
@@ -272,8 +272,8 @@ class Showcase extends StatefulWidget {
   /// To understand how text is aligned, check [TextAlign]
   final TextAlign descriptionTextAlign;
 
-  /// Defines the margin for the tooltip.
-  /// Which is from 0 to [toolTipSlideEndDistance].
+  /// Defines the margin from the screen edge for the tooltip.
+  /// ToolTip will try to not cross this border around the screen
   ///
   /// Defaults to 14.
   final double toolTipMargin;
@@ -797,7 +797,7 @@ class _ShowcaseState extends State<Showcase> {
             disableDefaultChildGestures: widget.disableDefaultTargetGestures,
             targetPadding: widget.targetPadding,
           ),
-          ToolTipWidget(
+          ToolTipWidgetV2(
             position: position,
             offset: offset,
             screenSize: screenSize,
@@ -810,8 +810,7 @@ class _ShowcaseState extends State<Showcase> {
             titleTextStyle: widget.titleTextStyle,
             descTextStyle: widget.descTextStyle,
             container: widget.container,
-            floatingActionWidget:
-                widget.floatingActionWidget ?? _globalFloatingActionWidget,
+            floatingActionWidget: null,
             tooltipBackgroundColor: widget.tooltipBackgroundColor,
             textColor: widget.textColor,
             showArrow: widget.showArrow,
@@ -842,6 +841,9 @@ class _ShowcaseState extends State<Showcase> {
             tooltipActionConfig: _getTooltipActionConfig(),
             tooltipActions: _getTooltipActions(),
           ),
+          widget.floatingActionWidget ??
+              _globalFloatingActionWidget ??
+              const SizedBox.shrink(),
         ],
       ],
     );

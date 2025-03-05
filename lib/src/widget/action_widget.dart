@@ -12,6 +12,7 @@ class ActionWidget extends StatelessWidget {
     required this.isArrowUp,
     this.outSidePadding = EdgeInsets.zero,
     this.width,
+    this.isHidden = false,
   });
 
   final TooltipActionConfig tooltipActionConfig;
@@ -21,22 +22,24 @@ class ActionWidget extends StatelessWidget {
   final CrossAxisAlignment crossAxisAlignment;
   final EdgeInsets outSidePadding;
   final bool isArrowUp;
+  final bool isHidden;
 
   @override
   Widget build(BuildContext context) {
     final getWidgetPadding = EdgeInsets.only(
-      top: isArrowUp ? tooltipActionConfig.gapBetweenContentAndAction : 0.0,
-      bottom: !isArrowUp ? tooltipActionConfig.gapBetweenContentAndAction : 0.0,
-    ).add(outSidePadding);
+            // top: isArrowUp ? tooltipActionConfig.gapBetweenContentAndAction : 0.0,
+            // bottom: !isArrowUp ? tooltipActionConfig.gapBetweenContentAndAction : 0.0,
+            )
+        .add(outSidePadding);
 
     return SizedBox(
-      width: width,
+      // width: width,
       child: Padding(
         padding: getWidgetPadding,
         child: Row(
-          mainAxisSize: width == null ? MainAxisSize.min : MainAxisSize.max,
-          mainAxisAlignment:
-              width == null ? MainAxisAlignment.start : alignment,
+          mainAxisSize:
+              width == null || isHidden ? MainAxisSize.max : MainAxisSize.max,
+          mainAxisAlignment: width == null || isHidden ? alignment : alignment,
           crossAxisAlignment: crossAxisAlignment,
           textBaseline: tooltipActionConfig.textBaseline,
           children: children,
