@@ -20,6 +20,9 @@
  * SOFTWARE.
  */
 
+import 'dart:async';
+import 'dart:ui';
+
 import 'package:flutter/material.dart';
 import 'package:showcaseview/src/shape_clipper.dart';
 
@@ -221,7 +224,7 @@ class ShowCaseWidgetState extends State<ShowCaseWidget> {
   List<GlobalKey> get hiddenFloatingActionKeys =>
       _hideFloatingWidgetKeys.keys.toList();
 
-  ShowcaseController? firstShowcaseStarted;
+  Timer? _timer;
 
   /// This Stores keys of showcase for which we will hide the
   /// [globalFloatingActionWidget].
@@ -263,7 +266,24 @@ class ShowCaseWidgetState extends State<ShowCaseWidget> {
   void initRootWidget() {
     WidgetsBinding.instance.addPostFrameCallback((_) {
       if (!mounted) return;
-      final rootWidget = context.findAncestorStateOfType<State<WidgetsApp>>();
+      final rootWidget =
+          context.findAncestorStateOfType<State<ShowCaseWidget>>();
+      rootRenderObject = rootWidget?.context.findRenderObject() as RenderBox?;
+      rootWidgetSize = rootWidget == null
+          ? MediaQuery.of(context).size
+          : rootRenderObject?.size;
+    });
+  }
+
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (!mounted) return;
+      print(MediaQuery.of(context).size);
+      final rootWidget =
+          context.findRootAncestorStateOfType<State<ShowCaseWidget>>();
       rootRenderObject = rootWidget?.context.findRenderObject() as RenderBox?;
       rootWidgetSize = rootWidget == null
           ? MediaQuery.of(context).size
@@ -282,7 +302,6 @@ class ShowCaseWidgetState extends State<ShowCaseWidget> {
       );
     }
     if (!mounted) return;
-    firstShowcaseStarted = null;
     setState(() {
       ids = widgetIds;
       activeWidgetId = 0;
@@ -292,50 +311,61 @@ class ShowCaseWidgetState extends State<ShowCaseWidget> {
 
   /// Completes showcase of given key and starts next one
   /// otherwise will finish the entire showcase view
-  void completed(GlobalKey? key) {
+  void completed(GlobalKey? key) async {
     if (ids != null && ids![activeWidgetId!] == key && mounted) {
-      setState(() {
-        _onComplete();
-        activeWidgetId = activeWidgetId! + 1;
-        _onStart();
+      await _onComplete();
+      if (mounted) {
+        setState(() {
+          activeWidgetId = activeWidgetId! + 1;
+          _onStart();
 
-        if (activeWidgetId! >= ids!.length) {
-          _cleanupAfterSteps();
-          widget.onFinish?.call();
-        }
-      });
+          if (activeWidgetId! >= ids!.length) {
+            _cleanupAfterSteps();
+            widget.onFinish?.call();
+          }
+        });
+      }
     }
   }
 
   /// Completes current active showcase and starts next one
   /// otherwise will finish the entire showcase view
-  void next() {
+  void next([bool fromAutoPlayOrAction = false]) async {
+    // If this call is from autoPlay timer or action widget we will override the
+    // enableAutoPlayLock so user can move forward in showcase
+    if (!fromAutoPlayOrAction && widget.enableAutoPlayLock) return;
+
     if (ids != null && mounted) {
-      setState(() {
-        _onComplete();
-        activeWidgetId = activeWidgetId! + 1;
-        _onStart();
-        if (activeWidgetId! >= ids!.length) {
-          _cleanupAfterSteps();
-          widget.onFinish?.call();
-        }
-      });
+      await _onComplete();
+      if (mounted) {
+        setState(() {
+          activeWidgetId = activeWidgetId! + 1;
+          _onStart();
+          if (activeWidgetId! >= ids!.length) {
+            _cleanupAfterSteps();
+            widget.onFinish?.call();
+          }
+        });
+      }
     }
   }
 
   /// Completes current active showcase and starts previous one
   /// otherwise will finish the entire showcase view
-  void previous() {
+  void previous() async {
     if (ids != null && ((activeWidgetId ?? 0) - 1) >= 0 && mounted) {
-      setState(() {
-        _onComplete();
-        activeWidgetId = activeWidgetId! - 1;
-        _onStart();
-        if (activeWidgetId! >= ids!.length) {
-          _cleanupAfterSteps();
-          widget.onFinish?.call();
-        }
-      });
+      await _onComplete();
+      if (mounted) {
+        setState(() {
+          // _onComplete();
+          activeWidgetId = activeWidgetId! - 1;
+          _onStart();
+          if (activeWidgetId! >= ids!.length) {
+            _cleanupAfterSteps();
+            widget.onFinish?.call();
+          }
+        });
+      }
     }
   }
 
@@ -348,34 +378,55 @@ class ShowCaseWidgetState extends State<ShowCaseWidget> {
         activeWidgetId == null || ids == null || ids!.length < activeWidgetId!;
 
     widget.onDismiss?.call(idNotExist ? null : ids?[activeWidgetId!]);
-    firstShowcaseStarted = null;
     if (mounted) setState(_cleanupAfterSteps);
   }
 
   void _onStart() {
     if (activeWidgetId! < ids!.length) {
       widget.onStart?.call(activeWidgetId, ids![activeWidgetId!]);
-      firstShowcaseStarted = null;
       for (final controller
           in showcaseController[getCurrentActiveShowcaseKey] ??
               <ShowcaseController>[]) {
         controller.startShowcase();
       }
     }
+    if (widget.autoPlay) {
+      if (_timer?.isActive ?? false) {
+        _timer?.cancel();
+        _timer = null;
+      }
+      _timer = Timer(
+        Duration(seconds: widget.autoPlayDelay.inSeconds),
+        () => next(true),
+      );
+    }
   }
 
-  void _onComplete() {
-    firstShowcaseStarted = null;
+  Future<void> _onComplete() async {
+    var futures = <Future>[];
     for (final controller in showcaseController[getCurrentActiveShowcaseKey] ??
         <ShowcaseController>[]) {
-      // controller.closeShowcase();
+      if (controller.showcaseConfig.disableScaleAnimation ??
+          widget.disableScaleAnimation) {
+        continue;
+      }
+      futures.add(controller.reverseAnimation());
     }
+    await Future.wait(futures);
     widget.onComplete?.call(activeWidgetId, ids![activeWidgetId!]);
+    if (widget.autoPlay) {
+      if (_timer?.isActive ?? false) {
+        _timer?.cancel();
+        _timer = null;
+      }
+    }
   }
 
   void _cleanupAfterSteps() {
     ids = null;
     activeWidgetId = null;
+    _timer?.cancel();
+    _timer = null;
   }
 
   /// Disables the [globalFloatingActionWidget] for the provided keys.
@@ -394,23 +445,25 @@ class ShowCaseWidgetState extends State<ShowCaseWidget> {
   @override
   Widget build(BuildContext context) {
     return AnchoredOverlay(
+        // key: UniqueKey(),
         rootRenderObject: rootRenderObject,
         showOverlay: getCurrentActiveShowcaseKey != null,
         overlayBuilder: (overlayContext, rectBound, anchor) {
-          if (getCurrentActiveShowcaseKey != null) {
-            final controller =
-                showcaseController[getCurrentActiveShowcaseKey] ??
-                    <ShowcaseController>[];
+          final size = rootWidgetSize ?? MediaQuery.of(context).size;
+          final controller = showcaseController[getCurrentActiveShowcaseKey] ??
+              <ShowcaseController>[];
+          if (getCurrentActiveShowcaseKey != null && controller.isNotEmpty) {
+            final firstController = controller.first;
+            final firstShowcaseConfig = firstController.showcaseConfig;
             return Stack(
               children: [
                 GestureDetector(
                   onTap: () {
-                    if (disableBarrierInteraction &&
-                        !widget.disableBarrierInteraction) {
-                      // _nextIfAny();
+                    firstShowcaseConfig.onBarrierClick?.call();
+                    if (!disableBarrierInteraction &&
+                        !firstShowcaseConfig.disableBarrierInteraction) {
+                      next();
                     }
-                    next();
-                    // widget.onBarrierClick?.call();
                   },
                   child: ClipPath(
                     clipper: RRectClipper(
@@ -424,16 +477,42 @@ class ShowCaseWidgetState extends State<ShowCaseWidget> {
                           )
                           .toList(),
                     ),
-                    child: Container(
-                      width: MediaQuery.of(context).size.width,
-                      height: MediaQuery.of(context).size.height,
-                      decoration: BoxDecoration(
-                        color: Colors.black.withOpacity(0.5),
-                      ),
-                    ),
+                    child: controller.first.blur != 0
+                        ? BackdropFilter(
+                            filter: ImageFilter.blur(
+                              sigmaX: firstController.blur,
+                              sigmaY: firstController.blur,
+                            ),
+                            child: Container(
+                              width: size.width,
+                              height: size.height,
+                              decoration: BoxDecoration(
+                                color: firstShowcaseConfig.overlayColor
+
+                                    //TODO: Update when we remove support for older version
+                                    //ignore: deprecated_member_use
+                                    .withOpacity(
+                                  firstShowcaseConfig.overlayOpacity,
+                                ),
+                              ),
+                            ),
+                          )
+                        : Container(
+                            width: size.width,
+                            height: size.height,
+                            decoration: BoxDecoration(
+                              color: firstShowcaseConfig.overlayColor
+                                  //TODO: Update when we remove support for older version
+                                  //ignore: deprecated_member_use
+                                  .withOpacity(
+                                firstShowcaseConfig.overlayOpacity,
+                              ),
+                            ),
+                          ),
                   ),
                 ),
-                for (final data in controller) ...data.getToolTipWidget,
+                for (final data in controller)
+                  ...data.getToolTipWidget.toList(),
               ],
             );
           } else {

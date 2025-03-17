@@ -19,12 +19,14 @@ class ShowcaseController {
 
   late GetPosition position;
   late LinkedShowcaseDataModel linkedShowcaseDataModel;
-  late Future<void> Function() connectedReverseAnimation;
   late Future<void> Function() reverseAnimation;
   late VoidCallback startShowcase;
   late VoidCallback closeShowcase;
   List<Widget> getToolTipWidget = [];
   bool isScrollRunning = false;
+  double blur = 0.0;
+  Size? rootWidgetSize;
+  RenderBox? rootRenderObject;
 
   @override
   int get hashCode {

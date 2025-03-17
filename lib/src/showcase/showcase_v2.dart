@@ -31,8 +31,8 @@ import '../models/linked_showcase_data.dart';
 import '../models/tooltip_action_button.dart';
 import '../models/tooltip_action_config.dart';
 import '../showcase_widget.dart';
+import '../tooltip/tooltip.dart';
 import '../tooltip_action_button_widget.dart';
-import '../tooltip_widget.dart';
 import '../widget/floating_action_widget.dart';
 import 'showcase_controller.dart';
 
@@ -569,8 +569,7 @@ class _ShowcaseState extends State<Showcase> {
   bool enableShowcase = true;
   // Timer? timer;
   GetPosition? position;
-  Size? rootWidgetSize;
-  RenderBox? rootRenderObject;
+
   late ShowcaseController showcaseController;
 
   late final showCaseWidgetState = ShowCaseWidget.of(context);
@@ -601,11 +600,7 @@ class _ShowcaseState extends State<Showcase> {
       showcaseKey: widget.showcaseKey,
       showcaseConfig: widget,
       updateShowcaseListener: showCaseWidgetState.updateShowcase,
-    )
-      ..connectedReverseAnimation = _connectedReverseAnimatedToolTip
-      ..reverseAnimation = _reverseAnimateTooltip
-      ..startShowcase = startShowcase;
-    // ..closeShowcase = closeShowcase;
+    )..startShowcase = startShowcase;
 
     if (connectedShowcase != null) {
       showCaseWidgetState.showcaseController[widget.showcaseKey]
@@ -638,6 +633,12 @@ class _ShowcaseState extends State<Showcase> {
   @override
   void didChangeDependencies() {
     super.didChangeDependencies();
+    recalculateRootWidgetSize();
+    WidgetsBinding.instance.addPostFrameCallback(
+      (timeStamp) {
+        _updateControllerData(context);
+      },
+    );
   }
 
   void startShowcase() {
@@ -651,11 +652,11 @@ class _ShowcaseState extends State<Showcase> {
           ?.call(context);
       final size = MediaQuery.of(context).size;
       position ??= GetPosition(
-        rootRenderObject: rootRenderObject,
+        rootRenderObject: showcaseController.rootRenderObject,
         context: context,
         padding: widget.targetPadding,
-        screenWidth: rootWidgetSize?.width ?? size.width,
-        screenHeight: rootWidgetSize?.height ?? size.height,
+        screenWidth: showcaseController.rootWidgetSize?.width ?? size.width,
+        screenHeight: showcaseController.rootWidgetSize?.height ?? size.height,
       );
       showOverlay();
     }
@@ -711,12 +712,6 @@ class _ShowcaseState extends State<Showcase> {
 
   @override
   Widget build(BuildContext context) {
-    WidgetsBinding.instance.addPostFrameCallback(
-      (timeStamp) {
-        _updateControllerData(context);
-      },
-    );
-
     // return AnchoredOverlay(
     //   key: showCaseWidgetState.anchoredOverlayKey,
     //   rootRenderObject: rootRenderObject,
@@ -748,14 +743,17 @@ class _ShowcaseState extends State<Showcase> {
   void dispose() {
     // timer?.cancel();
     // timer = null;
+    showCaseWidgetState.showcaseController[widget.showcaseKey]
+        ?.remove(showcaseController);
     super.dispose();
   }
 
   void initRootWidget() {
     WidgetsBinding.instance.addPostFrameCallback((_) {
       if (!mounted) return;
-      rootWidgetSize = showCaseWidgetState.rootWidgetSize;
-      rootRenderObject = showCaseWidgetState.rootRenderObject;
+      showcaseController.rootWidgetSize = showCaseWidgetState.rootWidgetSize;
+      showcaseController.rootRenderObject =
+          showCaseWidgetState.rootRenderObject;
     });
   }
 
@@ -763,11 +761,12 @@ class _ShowcaseState extends State<Showcase> {
     WidgetsBinding.instance.addPostFrameCallback((_) {
       if (!mounted) return;
       final rootWidget =
-          context.findRootAncestorStateOfType<State<WidgetsApp>>();
-      rootRenderObject = rootWidget?.context.findRenderObject() as RenderBox?;
-      rootWidgetSize = rootWidget == null
+          context.findRootAncestorStateOfType<State<ShowCaseWidget>>();
+      showcaseController.rootRenderObject =
+          rootWidget?.context.findRenderObject() as RenderBox?;
+      showcaseController.rootWidgetSize = rootWidget == null
           ? MediaQuery.of(context).size
-          : rootRenderObject?.size;
+          : showcaseController.rootRenderObject?.size;
     });
   }
 
@@ -782,13 +781,13 @@ class _ShowcaseState extends State<Showcase> {
     // } else if (timer != null && !timer!.isActive) {
     //   timer = null;
     // }
-    await _connectedReverseAnimatedToolTip();
+    // await _connectedReverseAnimatedToolTip();
     showCaseWidgetState.completed(widget.showcaseKey);
   }
 
   Future<void> _getOnTargetTap() async {
     if (widget.disposeOnTap == true) {
-      await _connectedReverseAnimatedToolTip();
+      // await _connectedReverseAnimatedToolTip();
       showCaseWidgetState.dismiss();
       widget.onTargetClick!();
     } else {
@@ -798,7 +797,7 @@ class _ShowcaseState extends State<Showcase> {
 
   Future<void> _getOnTooltipTap() async {
     if (widget.disposeOnTap == true) {
-      await _connectedReverseAnimatedToolTip();
+      // await _connectedReverseAnimatedToolTip();
       showCaseWidgetState.dismiss();
     }
     widget.onToolTipClick?.call();
@@ -806,35 +805,35 @@ class _ShowcaseState extends State<Showcase> {
 
   /// Reverse animates the provided tooltip or
   /// the custom container widget.
-  Future<void> _reverseAnimateTooltip() async {
-    if (!mounted) return;
-    setState(() => isTooltipDismissed = true);
-    await Future<dynamic>.delayed(widget.scaleAnimationDuration);
-    isTooltipDismissed = false;
-  }
+  // Future<void> _reverseAnimateTooltip() async {
+  //   if (!mounted) return;
+  //   setState(() => isTooltipDismissed = true);
+  //   await Future<dynamic>.delayed(widget.scaleAnimationDuration);
+  //   isTooltipDismissed = false;
+  // }
 
   /// This function is used to maintain all showcase reverse animation. When
   /// [_isLinkedShowCaseStarted] is true it will call parent's reverse animation
   /// function which will handle all child animation.
-  Future<void> _connectedReverseAnimatedToolTip() async {
-    if (false) {
-      final primaryShowcaseController =
-          showCaseWidgetState.firstShowcaseStarted;
-
-      if (primaryShowcaseController != null) {
-        await primaryShowcaseController.connectedReverseAnimation();
-      }
-    } else {
-      var futureList = <Future>[_reverseAnimateTooltip()];
-      for (final controller
-          in showCaseWidgetState.showcaseController[widget.showcaseKey] ??
-              <ShowcaseController>[]) {
-        if (controller == showcaseController) continue;
-        futureList.add(controller.reverseAnimation());
-      }
-      await Future.wait(futureList);
-    }
-  }
+  // Future<void> _connectedReverseAnimatedToolTip() async {
+  //   if (false) {
+  //     final primaryShowcaseController =
+  //         showCaseWidgetState.firstShowcaseStarted;
+  //
+  //     if (primaryShowcaseController != null) {
+  //       await primaryShowcaseController.connectedReverseAnimation();
+  //     }
+  //   } else {
+  //     var futureList = <Future>[_reverseAnimateTooltip()];
+  //     for (final controller
+  //         in showCaseWidgetState.showcaseController[widget.showcaseKey] ??
+  //             <ShowcaseController>[]) {
+  //       if (controller == showcaseController) continue;
+  //       futureList.add(controller.reverseAnimation());
+  //     }
+  //     await Future.wait(futureList);
+  //   }
+  // }
 
   void buildOverlayOnTarget(
     Offset offset,
@@ -863,6 +862,7 @@ class _ShowcaseState extends State<Showcase> {
 
     showcaseController
       ..position = position!
+      ..blur = blur
       ..getToolTipWidget = [
         if (showcaseController.isScrollRunning)
           Center(child: widget.scrollLoadingWidget),
@@ -879,6 +879,7 @@ class _ShowcaseState extends State<Showcase> {
             targetPadding: widget.targetPadding,
           ),
           ToolTipWidget(
+            key: ValueKey(showcaseController.hashCode),
             position: position,
             offset: offset,
             screenSize: screenSize,
@@ -922,10 +923,16 @@ class _ShowcaseState extends State<Showcase> {
             toolTipMargin: widget.toolTipMargin,
             tooltipActionConfig: _getTooltipActionConfig(),
             tooltipActions: _getTooltipActions(),
+            targetPadding: widget.targetPadding,
+            showcaseController: showcaseController,
           ),
+          if (_getFloatingActionWidget != null) _getFloatingActionWidget!,
         ],
       ];
   }
+
+  Widget? get _getFloatingActionWidget =>
+      widget.floatingActionWidget ?? _globalFloatingActionWidget;
 
   List<Widget> _getTooltipActions() {
     final actionData = (widget.tooltipActions?.isNotEmpty ?? false)
@@ -971,9 +978,10 @@ class _ShowcaseState extends State<Showcase> {
   }
 
   void _updateControllerData(BuildContext context) {
-    final size = rootWidgetSize ?? MediaQuery.of(context).size;
+    final size =
+        showcaseController.rootWidgetSize ?? MediaQuery.of(context).size;
     position = GetPosition(
-      rootRenderObject: rootRenderObject,
+      rootRenderObject: showcaseController.rootRenderObject,
       context: context,
       padding: widget.targetPadding,
       screenWidth: size.width,
@@ -1045,7 +1053,7 @@ class _TargetWidget extends StatelessWidget {
       behavior: HitTestBehavior.translucent,
       child: Container(
         height: size.height,
-        width: size.width,
+        width: size.width.abs(),
         margin: targetPadding,
         decoration: ShapeDecoration(
           shape: radius != null

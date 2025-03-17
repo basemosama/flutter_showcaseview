@@ -40,6 +40,7 @@ class ToolTipWidget extends StatefulWidget {
   final TooltipActionConfig tooltipActionConfig;
   final List<Widget> tooltipActions;
   final EdgeInsets targetPadding;
+  final ShowcaseController showcaseController;
 
   const ToolTipWidget({
     super.key,
@@ -81,6 +82,7 @@ class ToolTipWidget extends StatefulWidget {
     required this.tooltipActionConfig,
     required this.tooltipActions,
     required this.targetPadding,
+    required this.showcaseController,
   });
 
   @override
@@ -128,6 +130,8 @@ class _ToolTipWidgetState extends State<ToolTipWidget>
     if (!widget.disableMovingAnimation) {
       _movingAnimationController.forward();
     }
+    widget.showcaseController.reverseAnimation =
+        _scaleAnimationController.reverse;
   }
 
   @override
@@ -135,8 +139,8 @@ class _ToolTipWidgetState extends State<ToolTipWidget>
     super.didUpdateWidget(oldWidget);
     if (!widget.disableScaleAnimation && widget.isTooltipDismissed) {
       WidgetsBinding.instance.addPostFrameCallback(
-        (timeStamp) {
-          _scaleAnimationController.reverse();
+        (timeStamp) async {
+          await _scaleAnimationController.reverse();
         },
       );
     }
