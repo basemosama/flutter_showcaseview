@@ -599,7 +599,6 @@ class _ShowcaseState extends State<Showcase> {
       showcaseId: connectedShowcase?.length ?? 0,
       showcaseKey: widget.showcaseKey,
       showcaseConfig: widget,
-      updateShowcaseListener: showCaseWidgetState.updateShowcase,
     )..startShowcase = startShowcase;
 
     if (connectedShowcase != null) {
@@ -611,24 +610,6 @@ class _ShowcaseState extends State<Showcase> {
       ];
     }
   }
-
-  // @override
-  // void didUpdateWidget(covariant Showcase oldWidget) {
-  //   if (oldWidget.showcaseKey != widget.showcaseKey &&
-  //       oldWidget.key == widget.key &&
-  //       showcaseController?.showcaseKey == widget.showcaseKey) {
-  //     final connectedShowcase =
-  //         showCaseWidgetState.showcaseController[widget.showcaseKey];
-  //     showcaseController ??= ShowcaseController(
-  //       showcaseId: connectedShowcase?.length ?? 0,
-  //       showcaseKey: widget.showcaseKey,
-  //     )
-  //       ..connectedReverseAnimation = _connectedReverseAnimatedToolTip
-  //       ..reverseAnimation = _reverseAnimateTooltip
-  //       ..startShowcase = startShowcase;
-  //   }
-  //   super.didUpdateWidget(oldWidget);
-  // }
 
   @override
   void didChangeDependencies() {
@@ -761,7 +742,7 @@ class _ShowcaseState extends State<Showcase> {
     WidgetsBinding.instance.addPostFrameCallback((_) {
       if (!mounted) return;
       final rootWidget =
-          context.findRootAncestorStateOfType<State<ShowCaseWidget>>();
+          context.findRootAncestorStateOfType<State<WidgetsApp>>();
       showcaseController.rootRenderObject =
           rootWidget?.context.findRenderObject() as RenderBox?;
       showcaseController.rootWidgetSize = rootWidget == null
@@ -906,8 +887,10 @@ class _ShowcaseState extends State<Showcase> {
             tooltipPadding: widget.tooltipPadding,
             disableMovingAnimation: widget.disableMovingAnimation ??
                 showCaseWidgetState.disableMovingAnimation,
-            disableScaleAnimation: widget.disableScaleAnimation ??
-                showCaseWidgetState.disableScaleAnimation,
+            disableScaleAnimation: widget.container != null
+                ? true
+                : widget.disableScaleAnimation ??
+                    showCaseWidgetState.disableScaleAnimation,
             movingAnimationDuration: widget.movingAnimationDuration,
             tooltipBorderRadius: widget.tooltipBorderRadius,
             scaleAnimationDuration: widget.scaleAnimationDuration,

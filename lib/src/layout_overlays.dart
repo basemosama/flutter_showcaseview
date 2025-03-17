@@ -60,8 +60,10 @@ class AnchoredOverlay extends StatelessWidget {
   Widget build(BuildContext context) {
     return LayoutBuilder(
       builder: (context, constraints) {
+        print("hhhelll");
         return OverlayBuilder(
           showOverlay: showOverlay,
+          update: (updateOverlay) {},
           overlayBuilder: (overlayContext) {
             // To calculate the "anchor" point we grab the render box of
             // our parent Container and then we find the center of that box.
@@ -125,9 +127,11 @@ class OverlayBuilder extends StatefulWidget {
   final bool showOverlay;
   final WidgetBuilder? overlayBuilder;
   final Widget? child;
+  final void Function(VoidCallback updateOverlay) update;
 
   const OverlayBuilder({
     super.key,
+    required this.update,
     this.showOverlay = false,
     this.overlayBuilder,
     this.child,
@@ -147,6 +151,12 @@ class _OverlayBuilderState extends State<OverlayBuilder> {
     if (widget.showOverlay) {
       WidgetsBinding.instance.addPostFrameCallback((_) => showOverlay());
     }
+    widget.update.call(updateFunc);
+  }
+
+  void updateFunc() {
+    buildOverlay();
+    WidgetsBinding.instance.addPostFrameCallback((_) => syncWidgetAndOverlay());
   }
 
   @override
@@ -218,8 +228,6 @@ class _OverlayBuilderState extends State<OverlayBuilder> {
 
   @override
   Widget build(BuildContext context) {
-    buildOverlay();
-
     return widget.child!;
   }
 }

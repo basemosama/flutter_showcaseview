@@ -18,80 +18,84 @@ class MyApp extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return MaterialApp(
-      title: 'Flutter ShowCase',
-      theme: ThemeData(
-        primaryColor: const Color(0xffEE5366),
-      ),
-      debugShowCheckedModeBanner: false,
-      home: Scaffold(
-        body: ShowCaseWidget(
-          hideFloatingActionWidgetForShowcase: [_lastShowcaseWidget],
-          globalFloatingActionWidget: (showcaseContext) => FloatingActionWidget(
-            left: 16,
-            bottom: 16,
-            child: Padding(
-              padding: const EdgeInsets.all(16.0),
-              child: ElevatedButton(
-                onPressed: ShowCaseWidget.of(showcaseContext).dismiss,
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: const Color(0xffEE5366),
-                ),
-                child: const Text(
-                  'Skip',
-                  style: TextStyle(
-                    color: Colors.white,
-                    fontSize: 15,
+    return Padding(
+      padding: EdgeInsets.all(50),
+      child: MaterialApp(
+        title: 'Flutter ShowCase',
+        theme: ThemeData(
+          primaryColor: const Color(0xffEE5366),
+        ),
+        debugShowCheckedModeBanner: false,
+        home: Scaffold(
+          body: ShowCaseWidget(
+            hideFloatingActionWidgetForShowcase: [_lastShowcaseWidget],
+            globalFloatingActionWidget: (showcaseContext) =>
+                FloatingActionWidget(
+              left: 16,
+              bottom: 16,
+              child: Padding(
+                padding: const EdgeInsets.all(16.0),
+                child: ElevatedButton(
+                  onPressed: ShowCaseWidget.of(showcaseContext).dismiss,
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: const Color(0xffEE5366),
+                  ),
+                  child: const Text(
+                    'Skip',
+                    style: TextStyle(
+                      color: Colors.white,
+                      fontSize: 15,
+                    ),
                   ),
                 ),
               ),
             ),
-          ),
-          onStart: (index, key) {
-            log('onStart: $index, $key');
-          },
-          onComplete: (index, key) {
-            log('onComplete: $index, $key');
-            if (index == 4) {
-              SystemChrome.setSystemUIOverlayStyle(
-                SystemUiOverlayStyle.light.copyWith(
-                  statusBarIconBrightness: Brightness.dark,
-                  statusBarColor: Colors.white,
+            onStart: (index, key) {
+              log('onStart: $index, $key');
+            },
+            onComplete: (index, key) {
+              log('onComplete: $index, $key');
+              if (index == 4) {
+                SystemChrome.setSystemUIOverlayStyle(
+                  SystemUiOverlayStyle.light.copyWith(
+                    statusBarIconBrightness: Brightness.dark,
+                    statusBarColor: Colors.white,
+                  ),
+                );
+              }
+            },
+            blurValue: 1,
+            autoPlayDelay: const Duration(seconds: 3),
+            builder: (context) => const MailPage(),
+            globalTooltipActionConfig: const TooltipActionConfig(
+              position: TooltipActionPosition.inside,
+              alignment: MainAxisAlignment.spaceBetween,
+              actionGap: 20,
+            ),
+            globalTooltipActions: [
+              // Here we don't need previous action for the first showcase widget
+              // so we hide this action for the first showcase widget
+              TooltipActionButton(
+                type: TooltipDefaultActionType.previous,
+                textStyle: const TextStyle(
+                  color: Colors.white,
                 ),
-              );
-            }
-          },
-          blurValue: 1,
-          autoPlayDelay: const Duration(seconds: 3),
-          builder: (context) => const MailPage(),
-          globalTooltipActionConfig: const TooltipActionConfig(
-            position: TooltipActionPosition.inside,
-            alignment: MainAxisAlignment.spaceBetween,
-            actionGap: 20,
+                hideActionWidgetForShowcase: [_firstShowcaseWidget],
+              ),
+              // Here we don't need next action for the last showcase widget so we
+              // hide this action for the last showcase widget
+              TooltipActionButton(
+                type: TooltipDefaultActionType.next,
+                textStyle: const TextStyle(
+                  color: Colors.white,
+                ),
+                hideActionWidgetForShowcase: [_lastShowcaseWidget],
+              ),
+            ],
+            onDismiss: (key) {
+              debugPrint('Dismissed at $key');
+            },
           ),
-          globalTooltipActions: [
-            // Here we don't need previous action for the first showcase widget
-            // so we hide this action for the first showcase widget
-            TooltipActionButton(
-              type: TooltipDefaultActionType.previous,
-              textStyle: const TextStyle(
-                color: Colors.white,
-              ),
-              hideActionWidgetForShowcase: [_firstShowcaseWidget],
-            ),
-            // Here we don't need next action for the last showcase widget so we
-            // hide this action for the last showcase widget
-            TooltipActionButton(
-              type: TooltipDefaultActionType.next,
-              textStyle: const TextStyle(
-                color: Colors.white,
-              ),
-              hideActionWidgetForShowcase: [_lastShowcaseWidget],
-            ),
-          ],
-          onDismiss: (key) {
-            debugPrint('Dismissed at $key');
-          },
         ),
       ),
     );
@@ -119,7 +123,7 @@ class _MailPageState extends State<MailPage> {
     //Start showcase view after current widget frames are drawn.
     WidgetsBinding.instance.addPostFrameCallback(
       (_) => ShowCaseWidget.of(context).startShowCase(
-          [_firstShowcaseWidget, _three, _four, _lastShowcaseWidget]),
+          [_firstShowcaseWidget, _two, _three, _four, _lastShowcaseWidget]),
     );
     mails = [
       Mail(
@@ -284,7 +288,7 @@ class _MailPageState extends State<MailPage> {
                     ),
                     Showcase(
                       targetPadding: const EdgeInsets.all(5),
-                      key: _firstShowcaseWidget,
+                      key: _two,
                       linkedShowcaseKeys: [
                         _lastShowcaseWidget,
                       ],
@@ -431,7 +435,7 @@ class _MailPageState extends State<MailPage> {
               scrollController.jumpTo(0);
               ShowCaseWidget.of(context).startShowCase([
                 _firstShowcaseWidget,
-                // _two,
+                _two,
                 _three,
                 _four,
                 _lastShowcaseWidget

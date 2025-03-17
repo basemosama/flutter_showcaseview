@@ -131,7 +131,7 @@ class _ToolTipWidgetState extends State<ToolTipWidget>
       _movingAnimationController.forward();
     }
     widget.showcaseController.reverseAnimation =
-        _scaleAnimationController.reverse;
+        widget.disableScaleAnimation ? null : _scaleAnimationController.reverse;
   }
 
   @override
@@ -254,7 +254,8 @@ class _ToolTipWidgetState extends State<ToolTipWidget>
         targetPosition: targetPosition,
         targetSize: targetSize,
         position: widget.tooltipPosition,
-        screenSize: MediaQuery.of(context).size,
+        screenSize: widget.showcaseController.rootWidgetSize ??
+            MediaQuery.of(context).size,
         hasArrow: widget.showArrow,
         targetPadding: widget.targetPadding,
         scaleAlignment: widget.scaleAnimationAlignment,

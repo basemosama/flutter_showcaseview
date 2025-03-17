@@ -9,19 +9,16 @@ class ShowcaseController {
     required this.showcaseId,
     required this.showcaseKey,
     required this.showcaseConfig,
-    required this.updateShowcaseListener,
   });
 
   final int showcaseId;
   final GlobalKey showcaseKey;
   final Showcase showcaseConfig;
-  final VoidCallback updateShowcaseListener;
 
   late GetPosition position;
   late LinkedShowcaseDataModel linkedShowcaseDataModel;
-  late Future<void> Function() reverseAnimation;
   late VoidCallback startShowcase;
-  late VoidCallback closeShowcase;
+  Future<void> Function()? reverseAnimation;
   List<Widget> getToolTipWidget = [];
   bool isScrollRunning = false;
   double blur = 0.0;

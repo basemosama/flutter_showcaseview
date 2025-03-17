@@ -193,7 +193,6 @@ class ShowCaseWidgetState extends State<ShowCaseWidget> {
   int? activeWidgetId;
   RenderBox? rootRenderObject;
   Size? rootWidgetSize;
-  final anchoredOverlayKey = UniqueKey();
 
   late final TooltipActionConfig? globalTooltipActionConfig;
 
@@ -225,6 +224,8 @@ class ShowCaseWidgetState extends State<ShowCaseWidget> {
       _hideFloatingWidgetKeys.keys.toList();
 
   Timer? _timer;
+
+  VoidCallback? updateOverlay;
 
   /// This Stores keys of showcase for which we will hide the
   /// [globalFloatingActionWidget].
@@ -283,11 +284,12 @@ class ShowCaseWidgetState extends State<ShowCaseWidget> {
       if (!mounted) return;
       print(MediaQuery.of(context).size);
       final rootWidget =
-          context.findRootAncestorStateOfType<State<ShowCaseWidget>>();
+          context.findRootAncestorStateOfType<State<WidgetsApp>>();
       rootRenderObject = rootWidget?.context.findRenderObject() as RenderBox?;
       rootWidgetSize = rootWidget == null
           ? MediaQuery.of(context).size
           : rootRenderObject?.size;
+      updateOverlay?.call();
     });
   }
 
@@ -302,11 +304,12 @@ class ShowCaseWidgetState extends State<ShowCaseWidget> {
       );
     }
     if (!mounted) return;
-    setState(() {
-      ids = widgetIds;
-      activeWidgetId = 0;
-      _onStart();
-    });
+    // setState(() {
+    ids = widgetIds;
+    activeWidgetId = 0;
+    _onStart();
+    // });
+    updateOverlay?.call();
   }
 
   /// Completes showcase of given key and starts next one
@@ -315,15 +318,16 @@ class ShowCaseWidgetState extends State<ShowCaseWidget> {
     if (ids != null && ids![activeWidgetId!] == key && mounted) {
       await _onComplete();
       if (mounted) {
-        setState(() {
-          activeWidgetId = activeWidgetId! + 1;
-          _onStart();
+        // setState(() {
+        activeWidgetId = activeWidgetId! + 1;
+        _onStart();
 
-          if (activeWidgetId! >= ids!.length) {
-            _cleanupAfterSteps();
-            widget.onFinish?.call();
-          }
-        });
+        if (activeWidgetId! >= ids!.length) {
+          _cleanupAfterSteps();
+          widget.onFinish?.call();
+        }
+        // });
+        updateOverlay?.call();
       }
     }
   }
@@ -338,14 +342,15 @@ class ShowCaseWidgetState extends State<ShowCaseWidget> {
     if (ids != null && mounted) {
       await _onComplete();
       if (mounted) {
-        setState(() {
-          activeWidgetId = activeWidgetId! + 1;
-          _onStart();
-          if (activeWidgetId! >= ids!.length) {
-            _cleanupAfterSteps();
-            widget.onFinish?.call();
-          }
-        });
+        // setState(() {
+        activeWidgetId = activeWidgetId! + 1;
+        _onStart();
+        if (activeWidgetId! >= ids!.length) {
+          _cleanupAfterSteps();
+          widget.onFinish?.call();
+        }
+        // });
+        updateOverlay?.call();
       }
     }
   }
@@ -356,15 +361,16 @@ class ShowCaseWidgetState extends State<ShowCaseWidget> {
     if (ids != null && ((activeWidgetId ?? 0) - 1) >= 0 && mounted) {
       await _onComplete();
       if (mounted) {
-        setState(() {
-          // _onComplete();
-          activeWidgetId = activeWidgetId! - 1;
-          _onStart();
-          if (activeWidgetId! >= ids!.length) {
-            _cleanupAfterSteps();
-            widget.onFinish?.call();
-          }
-        });
+        // setState(() {
+        // _onComplete();
+        activeWidgetId = activeWidgetId! - 1;
+        _onStart();
+        if (activeWidgetId! >= ids!.length) {
+          _cleanupAfterSteps();
+          widget.onFinish?.call();
+        }
+        // });
+        updateOverlay?.call();
       }
     }
   }
@@ -378,7 +384,8 @@ class ShowCaseWidgetState extends State<ShowCaseWidget> {
         activeWidgetId == null || ids == null || ids!.length < activeWidgetId!;
 
     widget.onDismiss?.call(idNotExist ? null : ids?[activeWidgetId!]);
-    if (mounted) setState(_cleanupAfterSteps);
+    if (mounted) _cleanupAfterSteps.call();
+    updateOverlay?.call();
   }
 
   void _onStart() {
@@ -406,11 +413,12 @@ class ShowCaseWidgetState extends State<ShowCaseWidget> {
     var futures = <Future>[];
     for (final controller in showcaseController[getCurrentActiveShowcaseKey] ??
         <ShowcaseController>[]) {
-      if (controller.showcaseConfig.disableScaleAnimation ??
-          widget.disableScaleAnimation) {
+      if ((controller.showcaseConfig.disableScaleAnimation ??
+              widget.disableScaleAnimation) ||
+          controller.reverseAnimation == null) {
         continue;
       }
-      futures.add(controller.reverseAnimation());
+      futures.add(controller.reverseAnimation!.call());
     }
     await Future.wait(futures);
     widget.onComplete?.call(activeWidgetId, ids![activeWidgetId!]);
@@ -438,70 +446,54 @@ class ShowCaseWidgetState extends State<ShowCaseWidget> {
       ..addAll({for (final item in updatedList) item: true});
   }
 
-  void updateShowcase() {
-    print("Update showcase");
-  }
-
   @override
   Widget build(BuildContext context) {
-    return AnchoredOverlay(
-        // key: UniqueKey(),
-        rootRenderObject: rootRenderObject,
-        showOverlay: getCurrentActiveShowcaseKey != null,
-        overlayBuilder: (overlayContext, rectBound, anchor) {
-          final size = rootWidgetSize ?? MediaQuery.of(context).size;
-          final controller = showcaseController[getCurrentActiveShowcaseKey] ??
-              <ShowcaseController>[];
-          if (getCurrentActiveShowcaseKey != null && controller.isNotEmpty) {
-            final firstController = controller.first;
-            final firstShowcaseConfig = firstController.showcaseConfig;
-            return Stack(
-              children: [
-                GestureDetector(
-                  onTap: () {
-                    firstShowcaseConfig.onBarrierClick?.call();
-                    if (!disableBarrierInteraction &&
-                        !firstShowcaseConfig.disableBarrierInteraction) {
-                      next();
-                    }
-                  },
-                  child: ClipPath(
-                    clipper: RRectClipper(
-                      area: Rect.zero,
-                      isCircle: false,
-                      radius: BorderRadius.zero,
-                      overlayPadding: EdgeInsets.zero,
-                      linkedObjectData: controller
-                          .map(
-                            (e) => e.linkedShowcaseDataModel,
-                          )
-                          .toList(),
-                    ),
-                    child: controller.first.blur != 0
-                        ? BackdropFilter(
-                            filter: ImageFilter.blur(
-                              sigmaX: firstController.blur,
-                              sigmaY: firstController.blur,
-                            ),
-                            child: Container(
-                              width: size.width,
-                              height: size.height,
-                              decoration: BoxDecoration(
-                                color: firstShowcaseConfig.overlayColor
-
-                                    //TODO: Update when we remove support for older version
-                                    //ignore: deprecated_member_use
-                                    .withOpacity(
-                                  firstShowcaseConfig.overlayOpacity,
-                                ),
-                              ),
-                            ),
-                          )
-                        : Container(
+    return OverlayBuilder(
+      showOverlay: getCurrentActiveShowcaseKey != null,
+      update: (updateOverlays) {
+        updateOverlay = updateOverlays;
+      },
+      overlayBuilder: (_) {
+        final size = rootWidgetSize ?? MediaQuery.of(context).size;
+        final controller = showcaseController[getCurrentActiveShowcaseKey] ??
+            <ShowcaseController>[];
+        if (getCurrentActiveShowcaseKey != null && controller.isNotEmpty) {
+          final firstController = controller.first;
+          final firstShowcaseConfig = firstController.showcaseConfig;
+          return Stack(
+            children: [
+              GestureDetector(
+                onTap: () {
+                  firstShowcaseConfig.onBarrierClick?.call();
+                  if (!disableBarrierInteraction &&
+                      !firstShowcaseConfig.disableBarrierInteraction) {
+                    next();
+                  }
+                },
+                child: ClipPath(
+                  clipper: RRectClipper(
+                    area: Rect.zero,
+                    isCircle: false,
+                    radius: BorderRadius.zero,
+                    overlayPadding: EdgeInsets.zero,
+                    linkedObjectData: controller
+                        .map(
+                          (e) => e.linkedShowcaseDataModel,
+                        )
+                        .toList(),
+                  ),
+                  child: controller.first.blur != 0
+                      ? BackdropFilter(
+                          filter: ImageFilter.blur(
+                            sigmaX: firstController.blur,
+                            sigmaY: firstController.blur,
+                          ),
+                          child: Container(
                             width: size.width,
                             height: size.height,
                             decoration: BoxDecoration(
                               color: firstShowcaseConfig.overlayColor
+
                                   //TODO: Update when we remove support for older version
                                   //ignore: deprecated_member_use
                                   .withOpacity(
@@ -509,17 +501,30 @@ class ShowCaseWidgetState extends State<ShowCaseWidget> {
                               ),
                             ),
                           ),
-                  ),
+                        )
+                      : Container(
+                          width: size.width,
+                          height: size.height,
+                          decoration: BoxDecoration(
+                            color: firstShowcaseConfig.overlayColor
+                                //TODO: Update when we remove support for older version
+                                //ignore: deprecated_member_use
+                                .withOpacity(
+                              firstShowcaseConfig.overlayOpacity,
+                            ),
+                          ),
+                        ),
                 ),
-                for (final data in controller)
-                  ...data.getToolTipWidget.toList(),
-              ],
-            );
-          } else {
-            return SizedBox.shrink();
-          }
-        },
-        child: widget.builder(context));
+              ),
+              for (final data in controller) ...data.getToolTipWidget.toList(),
+            ],
+          );
+        } else {
+          return SizedBox.shrink();
+        }
+      },
+      child: widget.builder(context),
+    );
   }
 }
 
