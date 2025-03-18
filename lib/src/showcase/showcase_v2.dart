@@ -617,6 +617,7 @@ class _ShowcaseState extends State<Showcase> {
     recalculateRootWidgetSize();
     WidgetsBinding.instance.addPostFrameCallback(
       (timeStamp) {
+        print("from didchange");
         _updateControllerData(context);
       },
     );
@@ -691,43 +692,19 @@ class _ShowcaseState extends State<Showcase> {
   void _scrollIntoView() {
     WidgetsBinding.instance.addPostFrameCallback((timeStamp) async {
       if (!mounted) return;
-      setState(() => showcaseController.isScrollRunning = true);
+      showcaseController.isScrollRunning = true;
       await Scrollable.ensureVisible(
         context,
         duration: showCaseWidgetState.widget.scrollDuration,
         alignment: widget.scrollAlignment,
       );
       if (!mounted) return;
-      setState(() => showcaseController.isScrollRunning = false);
+      showcaseController.isScrollRunning = false;
     });
   }
 
   @override
   Widget build(BuildContext context) {
-    // return AnchoredOverlay(
-    //   key: showCaseWidgetState.anchoredOverlayKey,
-    //   rootRenderObject: rootRenderObject,
-    //   overlayBuilder: (overlayContext, rectBound, offset) {
-    //     showcaseController?.position = position!;
-    //     showcaseController?.linkedShowcaseDataModel = LinkedShowcaseDataModel(
-    //       rect: rectBound,
-    //       radius: _targetBorderRadius,
-    //       overlayPadding: _targetPadding,
-    //       isCircle: _isCircle,
-    //     );
-    //
-    //      buildOverlayOnTarget(
-    //       position!.getOffSet(),
-    //       position!.getRect().size,
-    //       position!.getRect(),
-    //       size,
-    //       [],
-    //     );
-    //   },
-    //   showOverlay: false,
-    //   child: widget.child,
-    // );
-    // }
     return widget.child;
   }
 
@@ -1046,7 +1023,7 @@ class _TargetWidget extends StatelessWidget {
       onDoubleTap: onDoubleTap,
       behavior: HitTestBehavior.translucent,
       child: Container(
-        height: size.height,
+        height: size.height.abs(),
         width: size.width.abs(),
         margin: targetPadding,
         decoration: ShapeDecoration(

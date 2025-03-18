@@ -466,7 +466,6 @@ class ShowCaseWidgetState extends State<ShowCaseWidget> {
 
   @override
   Widget build(BuildContext context) {
-    print("object");
     return OverlayBuilder(
       showOverlay: getCurrentActiveShowcaseKey != null,
       update: (updateOverlays) {
