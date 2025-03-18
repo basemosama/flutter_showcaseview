@@ -622,6 +622,17 @@ class _ShowcaseState extends State<Showcase> {
     );
   }
 
+  @override
+  void didUpdateWidget(covariant Showcase oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    recalculateRootWidgetSize();
+    WidgetsBinding.instance.addPostFrameCallback(
+      (timeStamp) {
+        _updateControllerData(context);
+      },
+    );
+  }
+
   void startShowcase() {
     enableShowcase = showCaseWidgetState.enableShowcase;
 
@@ -742,7 +753,7 @@ class _ShowcaseState extends State<Showcase> {
     WidgetsBinding.instance.addPostFrameCallback((_) {
       if (!mounted) return;
       final rootWidget =
-          context.findRootAncestorStateOfType<State<WidgetsApp>>();
+          context.findRootAncestorStateOfType<State<ShowCaseWidget>>();
       showcaseController.rootRenderObject =
           rootWidget?.context.findRenderObject() as RenderBox?;
       showcaseController.rootWidgetSize = rootWidget == null

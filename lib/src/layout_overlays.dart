@@ -162,7 +162,10 @@ class _OverlayBuilderState extends State<OverlayBuilder> {
   @override
   void didUpdateWidget(OverlayBuilder oldWidget) {
     super.didUpdateWidget(oldWidget);
-    WidgetsBinding.instance.addPostFrameCallback((_) => syncWidgetAndOverlay());
+    if (oldWidget.showOverlay != widget.showOverlay && widget.showOverlay) {
+      WidgetsBinding.instance.addPostFrameCallback((_) => showOverlay());
+    }
+    // WidgetsBinding.instance.addPostFrameCallback((_) => syncWidgetAndOverlay());
   }
 
   @override

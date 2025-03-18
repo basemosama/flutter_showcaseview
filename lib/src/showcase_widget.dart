@@ -282,9 +282,23 @@ class ShowCaseWidgetState extends State<ShowCaseWidget> {
 
     WidgetsBinding.instance.addPostFrameCallback((_) {
       if (!mounted) return;
-      print(MediaQuery.of(context).size);
       final rootWidget =
-          context.findRootAncestorStateOfType<State<WidgetsApp>>();
+          context.findRootAncestorStateOfType<State<ShowCaseWidget>>();
+      rootRenderObject = rootWidget?.context.findRenderObject() as RenderBox?;
+      rootWidgetSize = rootWidget == null
+          ? MediaQuery.of(context).size
+          : rootRenderObject?.size;
+      updateOverlay?.call();
+    });
+  }
+
+  @override
+  void didUpdateWidget(covariant ShowCaseWidget oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (!mounted) return;
+      final rootWidget =
+          context.findRootAncestorStateOfType<State<ShowCaseWidget>>();
       rootRenderObject = rootWidget?.context.findRenderObject() as RenderBox?;
       rootWidgetSize = rootWidget == null
           ? MediaQuery.of(context).size
@@ -304,12 +318,16 @@ class ShowCaseWidgetState extends State<ShowCaseWidget> {
       );
     }
     if (!mounted) return;
-    // setState(() {
-    ids = widgetIds;
-    activeWidgetId = 0;
-    _onStart();
-    // });
-    updateOverlay?.call();
+    setState(() {
+      ids = widgetIds;
+      activeWidgetId = 0;
+      _onStart();
+    });
+    WidgetsBinding.instance.addPostFrameCallback(
+      (timeStamp) {
+        updateOverlay?.call();
+      },
+    );
   }
 
   /// Completes showcase of given key and starts next one
@@ -448,6 +466,7 @@ class ShowCaseWidgetState extends State<ShowCaseWidget> {
 
   @override
   Widget build(BuildContext context) {
+    print("object");
     return OverlayBuilder(
       showOverlay: getCurrentActiveShowcaseKey != null,
       update: (updateOverlays) {
