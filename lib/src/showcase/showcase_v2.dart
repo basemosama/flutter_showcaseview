@@ -599,6 +599,7 @@ class _ShowcaseState extends State<Showcase> {
       showcaseId: connectedShowcase?.length ?? 0,
       showcaseKey: widget.showcaseKey,
       showcaseConfig: widget,
+      scrollIntoView: _scrollIntoView,
     )..startShowcase = startShowcase;
 
     if (connectedShowcase != null) {
@@ -616,8 +617,7 @@ class _ShowcaseState extends State<Showcase> {
     super.didChangeDependencies();
     recalculateRootWidgetSize();
     WidgetsBinding.instance.addPostFrameCallback(
-      (timeStamp) {
-        print("from didchange");
+      (_) {
         _updateControllerData(context);
       },
     );
@@ -628,7 +628,7 @@ class _ShowcaseState extends State<Showcase> {
     super.didUpdateWidget(oldWidget);
     recalculateRootWidgetSize();
     WidgetsBinding.instance.addPostFrameCallback(
-      (timeStamp) {
+      (_) {
         _updateControllerData(context);
       },
     );
@@ -651,56 +651,26 @@ class _ShowcaseState extends State<Showcase> {
         screenWidth: showcaseController.rootWidgetSize?.width ?? size.width,
         screenHeight: showcaseController.rootWidgetSize?.height ?? size.height,
       );
-      showOverlay();
+      // showOverlay();
     }
   }
 
-  // void closeShowcase() {
-  //   // setState(() {
-  //   // showShowCase = false;
-  //   timer?.cancel();
-  //   timer = null;
-  //   // });
-  // }
-
-  /// show overlay if there is any target widget
-  void showOverlay() {
-    // final activeStep = showCaseWidgetState.getCurrentActiveShowcaseKey;
-    // final linkedShowcases = showCaseWidgetState.showcaseController[activeStep];
-    // if this showcase is linked to current active showcase then we will make
-    // _isLinkedShowCaseStarted true
-
-    // } else {
-    //   _isLinkedShowCaseStarted = false;
-    // }
-    // print(showcaseController?.showcaseId);
-    // setState(() {
-    //   showShowCase = activeStep == widget.showcaseKey;
-    // });
-
-    if (
-        // showShowCase &&
-        (widget.enableAutoScroll ?? showCaseWidgetState.enableAutoScroll)) {
-      _scrollIntoView();
-    }
-    // else if (timer?.isActive ?? false) {
-    //   timer?.cancel();
-    //   timer = null;
-    // }
-  }
-
-  void _scrollIntoView() {
-    WidgetsBinding.instance.addPostFrameCallback((timeStamp) async {
-      if (!mounted) return;
-      showcaseController.isScrollRunning = true;
-      await Scrollable.ensureVisible(
-        context,
-        duration: showCaseWidgetState.widget.scrollDuration,
-        alignment: widget.scrollAlignment,
-      );
-      if (!mounted) return;
-      showcaseController.isScrollRunning = false;
-    });
+  Future<void> _scrollIntoView() async {
+    if (!mounted) return;
+    showcaseController.isScrollRunning = true;
+    _updateControllerData(context);
+    startShowcase();
+    showCaseWidgetState.updateOverlay?.call();
+    await Scrollable.ensureVisible(
+      context,
+      duration: showCaseWidgetState.widget.scrollDuration,
+      alignment: widget.scrollAlignment,
+    );
+    if (!mounted) return;
+    showcaseController.isScrollRunning = false;
+    _updateControllerData(context);
+    startShowcase();
+    showCaseWidgetState.updateOverlay?.call();
   }
 
   @override
@@ -710,8 +680,6 @@ class _ShowcaseState extends State<Showcase> {
 
   @override
   void dispose() {
-    // timer?.cancel();
-    // timer = null;
     showCaseWidgetState.showcaseController[widget.showcaseKey]
         ?.remove(showcaseController);
     super.dispose();
@@ -741,22 +709,11 @@ class _ShowcaseState extends State<Showcase> {
 
   Future<void> _nextIfAny() async {
     if (showCaseWidgetState.isShowCaseCompleted) return;
-
-    // if (timer != null && timer!.isActive) {
-    //   if (showCaseWidgetState.enableAutoPlayLock) {
-    //     return;
-    //   }
-    //   timer!.cancel();
-    // } else if (timer != null && !timer!.isActive) {
-    //   timer = null;
-    // }
-    // await _connectedReverseAnimatedToolTip();
     showCaseWidgetState.completed(widget.showcaseKey);
   }
 
   Future<void> _getOnTargetTap() async {
     if (widget.disposeOnTap == true) {
-      // await _connectedReverseAnimatedToolTip();
       showCaseWidgetState.dismiss();
       widget.onTargetClick!();
     } else {
@@ -766,43 +723,10 @@ class _ShowcaseState extends State<Showcase> {
 
   Future<void> _getOnTooltipTap() async {
     if (widget.disposeOnTap == true) {
-      // await _connectedReverseAnimatedToolTip();
       showCaseWidgetState.dismiss();
     }
     widget.onToolTipClick?.call();
   }
-
-  /// Reverse animates the provided tooltip or
-  /// the custom container widget.
-  // Future<void> _reverseAnimateTooltip() async {
-  //   if (!mounted) return;
-  //   setState(() => isTooltipDismissed = true);
-  //   await Future<dynamic>.delayed(widget.scaleAnimationDuration);
-  //   isTooltipDismissed = false;
-  // }
-
-  /// This function is used to maintain all showcase reverse animation. When
-  /// [_isLinkedShowCaseStarted] is true it will call parent's reverse animation
-  /// function which will handle all child animation.
-  // Future<void> _connectedReverseAnimatedToolTip() async {
-  //   if (false) {
-  //     final primaryShowcaseController =
-  //         showCaseWidgetState.firstShowcaseStarted;
-  //
-  //     if (primaryShowcaseController != null) {
-  //       await primaryShowcaseController.connectedReverseAnimation();
-  //     }
-  //   } else {
-  //     var futureList = <Future>[_reverseAnimateTooltip()];
-  //     for (final controller
-  //         in showCaseWidgetState.showcaseController[widget.showcaseKey] ??
-  //             <ShowcaseController>[]) {
-  //       if (controller == showcaseController) continue;
-  //       futureList.add(controller.reverseAnimation());
-  //     }
-  //     await Future.wait(futureList);
-  //   }
-  // }
 
   void buildOverlayOnTarget(
     Offset offset,
@@ -815,19 +739,6 @@ class _ShowcaseState extends State<Showcase> {
     blur = widget.blurValue ?? showCaseWidgetState.blurValue;
 
     blur = kIsWeb && blur < 0 ? 0 : blur;
-
-    // if (!showShowCase) return const Offstage();
-
-    // if (showCaseWidgetState.getCurrentActiveShowcaseKey == widget.showcaseKey &&
-    //     showCaseWidgetState.firstShowcaseStarted == null) {
-    //   showCaseWidgetState.firstShowcaseStarted = showcaseController;
-    // }
-    // if (showCaseWidgetState.autoPlay) {
-    //   timer ??= Timer(
-    //     Duration(seconds: showCaseWidgetState.autoPlayDelay.inSeconds),
-    //     _nextIfAny,
-    //   );
-    // }
 
     showcaseController
       ..position = position!
@@ -915,11 +826,8 @@ class _ShowcaseState extends State<Showcase> {
       /// This checks that if current widget is being showcased and there is
       /// no local action has been provided and global action are needed to hide
       /// then it will hide that action for current widget
-      if (
-          // showShowCase &&
-
-          action.hideActionWidgetForShowcase.contains(widget.showcaseKey) &&
-              (widget.tooltipActions?.isEmpty ?? true)) {
+      if (action.hideActionWidgetForShowcase.contains(widget.showcaseKey) &&
+          (widget.tooltipActions?.isEmpty ?? true)) {
         continue;
       }
       actionWidgets.add(

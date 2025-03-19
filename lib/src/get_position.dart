@@ -72,7 +72,10 @@ class GetPosition {
     final topLeft = _box!.size.topLeft(_boxOffset!);
     final bottomRight = _box!.size.bottomRight(_boxOffset!);
     final leftDx = topLeft.dx - padding.left;
-    final leftDy = topLeft.dy - padding.top;
+    var leftDy = topLeft.dy - padding.top;
+    if (leftDy < 0) {
+      leftDy = 0;
+    }
     final rect = Rect.fromLTRB(
       leftDx.clamp(0, leftDx),
       leftDy.clamp(0, leftDy),

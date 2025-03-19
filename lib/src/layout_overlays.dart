@@ -60,7 +60,6 @@ class AnchoredOverlay extends StatelessWidget {
   Widget build(BuildContext context) {
     return LayoutBuilder(
       builder: (context, constraints) {
-        print("hhhelll");
         return OverlayBuilder(
           showOverlay: showOverlay,
           update: (updateOverlay) {},
@@ -165,7 +164,6 @@ class _OverlayBuilderState extends State<OverlayBuilder> {
     if (oldWidget.showOverlay != widget.showOverlay && widget.showOverlay) {
       WidgetsBinding.instance.addPostFrameCallback((_) => showOverlay());
     }
-    // WidgetsBinding.instance.addPostFrameCallback((_) => syncWidgetAndOverlay());
   }
 
   @override
@@ -179,7 +177,6 @@ class _OverlayBuilderState extends State<OverlayBuilder> {
     if (isShowingOverlay()) {
       hideOverlay();
     }
-
     super.dispose();
   }
 

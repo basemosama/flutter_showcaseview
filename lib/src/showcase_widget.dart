@@ -24,10 +24,10 @@ import 'dart:async';
 import 'dart:ui';
 
 import 'package:flutter/material.dart';
-import 'package:showcaseview/src/shape_clipper.dart';
 
 import '../showcaseview.dart';
 import 'layout_overlays.dart';
+import 'shape_clipper.dart';
 import 'showcase/showcase_controller.dart';
 
 typedef FloatingActionBuilderCallback = FloatingActionWidget Function(
@@ -321,6 +321,7 @@ class ShowCaseWidgetState extends State<ShowCaseWidget> {
     setState(() {
       ids = widgetIds;
       activeWidgetId = 0;
+      updateOverlay?.call();
       _onStart();
     });
     WidgetsBinding.instance.addPostFrameCallback(
@@ -336,7 +337,6 @@ class ShowCaseWidgetState extends State<ShowCaseWidget> {
     if (ids != null && ids![activeWidgetId!] == key && mounted) {
       await _onComplete();
       if (mounted) {
-        // setState(() {
         activeWidgetId = activeWidgetId! + 1;
         _onStart();
 
@@ -344,7 +344,6 @@ class ShowCaseWidgetState extends State<ShowCaseWidget> {
           _cleanupAfterSteps();
           widget.onFinish?.call();
         }
-        // });
         updateOverlay?.call();
       }
     }
@@ -360,14 +359,12 @@ class ShowCaseWidgetState extends State<ShowCaseWidget> {
     if (ids != null && mounted) {
       await _onComplete();
       if (mounted) {
-        // setState(() {
         activeWidgetId = activeWidgetId! + 1;
         _onStart();
         if (activeWidgetId! >= ids!.length) {
           _cleanupAfterSteps();
           widget.onFinish?.call();
         }
-        // });
         updateOverlay?.call();
       }
     }
@@ -379,15 +376,12 @@ class ShowCaseWidgetState extends State<ShowCaseWidget> {
     if (ids != null && ((activeWidgetId ?? 0) - 1) >= 0 && mounted) {
       await _onComplete();
       if (mounted) {
-        // setState(() {
-        // _onComplete();
         activeWidgetId = activeWidgetId! - 1;
         _onStart();
         if (activeWidgetId! >= ids!.length) {
           _cleanupAfterSteps();
           widget.onFinish?.call();
         }
-        // });
         updateOverlay?.call();
       }
     }
@@ -406,13 +400,19 @@ class ShowCaseWidgetState extends State<ShowCaseWidget> {
     updateOverlay?.call();
   }
 
-  void _onStart() {
+  Future<void> _onStart() async {
     if (activeWidgetId! < ids!.length) {
       widget.onStart?.call(activeWidgetId, ids![activeWidgetId!]);
-      for (final controller
-          in showcaseController[getCurrentActiveShowcaseKey] ??
-              <ShowcaseController>[]) {
-        controller.startShowcase();
+      final controllers = showcaseController[getCurrentActiveShowcaseKey] ??
+          <ShowcaseController>[];
+      if ((controllers).length == 1 &&
+          (controllers.first.showcaseConfig.enableAutoScroll ??
+              widget.enableAutoScroll)) {
+        await controllers.first.scrollIntoView?.call();
+      } else {
+        for (final controller in controllers) {
+          controller.startShowcase();
+        }
       }
     }
     if (widget.autoPlay) {
@@ -541,20 +541,7 @@ class ShowCaseWidgetState extends State<ShowCaseWidget> {
           return SizedBox.shrink();
         }
       },
-      child: widget.builder(context),
+      child: Builder(builder: widget.builder),
     );
   }
-}
-
-class _InheritedShowCaseView extends InheritedWidget {
-  final GlobalKey? activeWidgetIds;
-
-  const _InheritedShowCaseView({
-    required this.activeWidgetIds,
-    required super.child,
-  });
-
-  @override
-  bool updateShouldNotify(_InheritedShowCaseView oldWidget) =>
-      oldWidget.activeWidgetIds != activeWidgetIds;
 }

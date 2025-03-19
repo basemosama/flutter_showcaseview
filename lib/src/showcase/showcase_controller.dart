@@ -9,6 +9,7 @@ class ShowcaseController {
     required this.showcaseId,
     required this.showcaseKey,
     required this.showcaseConfig,
+    required this.scrollIntoView,
   });
 
   final int showcaseId;
@@ -18,6 +19,7 @@ class ShowcaseController {
   late GetPosition position;
   late LinkedShowcaseDataModel linkedShowcaseDataModel;
   late VoidCallback startShowcase;
+  Future<void> Function()? scrollIntoView;
   Future<void> Function()? reverseAnimation;
   List<Widget> getToolTipWidget = [];
   bool isScrollRunning = false;

@@ -309,6 +309,7 @@ class _ToolTipWidgetState extends State<ToolTipWidget>
             ? EdgeInsets.only(
                 left: widget.tooltipPadding?.left ?? 0,
                 right: widget.tooltipPadding?.right ?? 0,
+                top: widget.tooltipActionConfig.gapBetweenContentAndAction,
               )
             : EdgeInsets.zero,
         alignment: widget.tooltipActionConfig.alignment,

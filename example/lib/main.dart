@@ -236,6 +236,7 @@ class _MailPageState extends State<MailPage> {
                                     Showcase(
                                       key: _firstShowcaseWidget,
                                       description: 'Tap to see menu options',
+                                      tooltipPosition: TooltipPosition.right,
                                       onBarrierClick: () {
                                         debugPrint('Barrier clicked');
                                         debugPrint(
@@ -293,6 +294,7 @@ class _MailPageState extends State<MailPage> {
                       linkedShowcaseKeys: [
                         _lastShowcaseWidget,
                       ],
+                      tooltipPosition: TooltipPosition.left,
                       title: 'Profile',
                       description:
                           "Tap to see profile which contains user's name, profile picture, mobile number and country",
@@ -381,7 +383,7 @@ class _MailPageState extends State<MailPage> {
                 controller: scrollController,
                 physics: const BouncingScrollPhysics(),
                 itemBuilder: (context, index) {
-                  if (index == 8) {
+                  if (index == 6) {
                     return showcaseMailTile(_three, true, context, mails.first);
                   }
                   return MailTile(
