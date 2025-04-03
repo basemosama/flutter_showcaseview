@@ -63,7 +63,10 @@ class MyApp extends StatelessWidget {
           },
           blurValue: 1,
           autoPlayDelay: const Duration(seconds: 3),
-          builder: (context) => const MailPage(),
+          builder: (context) {
+            print("from showcase build");
+            return const MailPage();
+          },
           globalTooltipActionConfig: const TooltipActionConfig(
             position: TooltipActionPosition.inside,
             alignment: MainAxisAlignment.spaceBetween,
@@ -463,14 +466,30 @@ class _MailPageState extends State<MailPage> {
           onTargetClick: () {
             Navigator.push<void>(
               context,
-              MaterialPageRoute<void>(
-                builder: (_) => const Detail(),
+              PageRouteBuilder(
+                pageBuilder: (context, animation, secondaryAnimation) =>
+                    const Detail(),
+                transitionsBuilder:
+                    (context, animation, secondaryAnimation, child) {
+                  return SlideTransition(
+                    position: Tween<Offset>(
+                      begin: const Offset(1.0, 0.0),
+                      end: Offset.zero,
+                    ).animate(animation),
+                    child: child,
+                  );
+                },
+                transitionDuration: const Duration(milliseconds: 2000),
               ),
             ).then((_) {
-              setState(() {
+              if (mounted) {
+                // setState(() {
                 ShowCaseWidget.of(context)
                     .startShowCase([_four, _lastShowcaseWidget]);
-              });
+                // });
+              }
+            }).catchError((error) {
+              debugPrint('Navigation error: $error');
             });
           },
           tooltipActionConfig: const TooltipActionConfig(

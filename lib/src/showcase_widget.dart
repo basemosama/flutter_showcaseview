@@ -274,6 +274,7 @@ class ShowCaseWidgetState extends State<ShowCaseWidget> {
     }
     if (!mounted) return;
     setState(() {
+      print("first");
       ids = widgetIds;
       activeWidgetId = 0;
       _onStart();
@@ -285,6 +286,7 @@ class ShowCaseWidgetState extends State<ShowCaseWidget> {
   void completed(GlobalKey? key) {
     if (ids != null && ids![activeWidgetId!] == key && mounted) {
       setState(() {
+        print("second");
         _onComplete();
         activeWidgetId = activeWidgetId! + 1;
         _onStart();
@@ -302,6 +304,7 @@ class ShowCaseWidgetState extends State<ShowCaseWidget> {
   void next() {
     if (ids != null && mounted) {
       setState(() {
+        print("third");
         _onComplete();
         activeWidgetId = activeWidgetId! + 1;
         _onStart();
@@ -319,6 +322,7 @@ class ShowCaseWidgetState extends State<ShowCaseWidget> {
   void previous() {
     if (ids != null && ((activeWidgetId ?? 0) - 1) >= 0 && mounted) {
       setState(() {
+        print("forth");
         _onComplete();
         activeWidgetId = activeWidgetId! - 1;
         _onStart();
@@ -341,6 +345,7 @@ class ShowCaseWidgetState extends State<ShowCaseWidget> {
     widget.onDismiss?.call(idNotExist ? null : ids?[activeWidgetId!]);
 
     if (mounted) setState(_cleanupAfterSteps);
+    print("fifth");
   }
 
   void _onStart() {

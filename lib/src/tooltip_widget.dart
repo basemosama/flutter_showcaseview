@@ -412,6 +412,7 @@ class _ToolTipWidgetState extends State<ToolTipWidget>
     super.didChangeDependencies();
     // If tooltip is dismissing then no need to recalculate the size and widgets
     if (!widget.isTooltipDismissed) {
+      print("from didchange");
       _getTooltipSize();
     }
   }
@@ -422,6 +423,7 @@ class _ToolTipWidgetState extends State<ToolTipWidget>
     // If tooltip is dismissing then no need to recalculate the size and widgets
     // If widget is same as before then also no need to calculate
     if (!widget.isTooltipDismissed && oldWidget.hashCode != hashCode) {
+      print("from didUpdate");
       _getTooltipSize();
     }
   }
@@ -436,6 +438,7 @@ class _ToolTipWidgetState extends State<ToolTipWidget>
   @override
   Widget build(BuildContext context) {
     // TODO: maybe all this calculation doesn't need to run here. Maybe all or some of it can be moved outside?
+    print("from build");
     position = widget.offset;
     final contentOrientation = findPositionForContent(position!);
     final contentOffsetMultiplier =

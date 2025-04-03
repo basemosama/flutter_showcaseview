@@ -34,7 +34,6 @@ import 'models/tooltip_action_config.dart';
 import 'shape_clipper.dart';
 import 'showcase_widget.dart';
 import 'tooltip_action_button_widget.dart';
-import 'tooltip_widget.dart';
 import 'widget/floating_action_widget.dart';
 
 class Showcase extends StatefulWidget {
@@ -596,6 +595,7 @@ class _ShowcaseState extends State<Showcase> {
   void showOverlay() {
     final activeStep = ShowCaseWidget.activeTargetWidget(context);
     setState(() {
+      print("shoewcase first");
       _showShowCase = activeStep == widget.key;
     });
 
@@ -620,12 +620,14 @@ class _ShowcaseState extends State<Showcase> {
       final keyContext = widget.key.currentContext;
       if (!mounted) return;
       setState(() => _isScrollRunning = true);
+      print("shoewcase second");
       await Scrollable.ensureVisible(
         keyContext!,
         duration: showCaseWidgetState.widget.scrollDuration,
         alignment: widget.scrollAlignment,
       );
       if (!mounted) return;
+      print("shoewcase third");
       setState(() => _isScrollRunning = false);
     });
   }
@@ -719,6 +721,7 @@ class _ShowcaseState extends State<Showcase> {
   /// the custom container widget.
   Future<void> _reverseAnimateTooltip() async {
     if (!mounted) return;
+    print("shoewcase forth");
     setState(() => _isTooltipDismissed = true);
     await Future<dynamic>.delayed(widget.scaleAnimationDuration);
     _isTooltipDismissed = false;
@@ -797,51 +800,51 @@ class _ShowcaseState extends State<Showcase> {
             disableDefaultChildGestures: widget.disableDefaultTargetGestures,
             targetPadding: widget.targetPadding,
           ),
-          ToolTipWidget(
-            position: position,
-            offset: offset,
-            screenSize: screenSize,
-            title: widget.title,
-            titleTextAlign: widget.titleTextAlign,
-            description: widget.description,
-            descriptionTextAlign: widget.descriptionTextAlign,
-            titleAlignment: widget.titleAlignment,
-            descriptionAlignment: widget.descriptionAlignment,
-            titleTextStyle: widget.titleTextStyle,
-            descTextStyle: widget.descTextStyle,
-            container: widget.container,
-            floatingActionWidget:
-                widget.floatingActionWidget ?? _globalFloatingActionWidget,
-            tooltipBackgroundColor: widget.tooltipBackgroundColor,
-            textColor: widget.textColor,
-            showArrow: widget.showArrow,
-            contentHeight: widget.height,
-            contentWidth: widget.width,
-            onTooltipTap:
-                widget.disposeOnTap == true || widget.onToolTipClick != null
-                    ? _getOnTooltipTap
-                    : null,
-            tooltipPadding: widget.tooltipPadding,
-            disableMovingAnimation: widget.disableMovingAnimation ??
-                showCaseWidgetState.disableMovingAnimation,
-            disableScaleAnimation: widget.disableScaleAnimation ??
-                showCaseWidgetState.disableScaleAnimation,
-            movingAnimationDuration: widget.movingAnimationDuration,
-            tooltipBorderRadius: widget.tooltipBorderRadius,
-            scaleAnimationDuration: widget.scaleAnimationDuration,
-            scaleAnimationCurve: widget.scaleAnimationCurve,
-            scaleAnimationAlignment: widget.scaleAnimationAlignment,
-            isTooltipDismissed: _isTooltipDismissed,
-            tooltipPosition: widget.tooltipPosition,
-            titlePadding: widget.titlePadding,
-            descriptionPadding: widget.descriptionPadding,
-            titleTextDirection: widget.titleTextDirection,
-            descriptionTextDirection: widget.descriptionTextDirection,
-            toolTipSlideEndDistance: widget.toolTipSlideEndDistance,
-            toolTipMargin: widget.toolTipMargin,
-            tooltipActionConfig: _getTooltipActionConfig(),
-            tooltipActions: _getTooltipActions(),
-          ),
+          // ToolTipWidget(
+          //   position: position,
+          //   offset: offset,
+          //   screenSize: screenSize,
+          //   title: widget.title,
+          //   titleTextAlign: widget.titleTextAlign,
+          //   description: widget.description,
+          //   descriptionTextAlign: widget.descriptionTextAlign,
+          //   titleAlignment: widget.titleAlignment,
+          //   descriptionAlignment: widget.descriptionAlignment,
+          //   titleTextStyle: widget.titleTextStyle,
+          //   descTextStyle: widget.descTextStyle,
+          //   container: widget.container,
+          //   floatingActionWidget:
+          //       widget.floatingActionWidget ?? _globalFloatingActionWidget,
+          //   tooltipBackgroundColor: widget.tooltipBackgroundColor,
+          //   textColor: widget.textColor,
+          //   showArrow: widget.showArrow,
+          //   contentHeight: widget.height,
+          //   contentWidth: widget.width,
+          //   onTooltipTap:
+          //       widget.disposeOnTap == true || widget.onToolTipClick != null
+          //           ? _getOnTooltipTap
+          //           : null,
+          //   tooltipPadding: widget.tooltipPadding,
+          //   disableMovingAnimation: widget.disableMovingAnimation ??
+          //       showCaseWidgetState.disableMovingAnimation,
+          //   disableScaleAnimation: widget.disableScaleAnimation ??
+          //       showCaseWidgetState.disableScaleAnimation,
+          //   movingAnimationDuration: widget.movingAnimationDuration,
+          //   tooltipBorderRadius: widget.tooltipBorderRadius,
+          //   scaleAnimationDuration: widget.scaleAnimationDuration,
+          //   scaleAnimationCurve: widget.scaleAnimationCurve,
+          //   scaleAnimationAlignment: widget.scaleAnimationAlignment,
+          //   isTooltipDismissed: _isTooltipDismissed,
+          //   tooltipPosition: widget.tooltipPosition,
+          //   titlePadding: widget.titlePadding,
+          //   descriptionPadding: widget.descriptionPadding,
+          //   titleTextDirection: widget.titleTextDirection,
+          //   descriptionTextDirection: widget.descriptionTextDirection,
+          //   toolTipSlideEndDistance: widget.toolTipSlideEndDistance,
+          //   toolTipMargin: widget.toolTipMargin,
+          //   tooltipActionConfig: _getTooltipActionConfig(),
+          //   tooltipActions: _getTooltipActions(),
+          // ),
         ],
       ],
     );
