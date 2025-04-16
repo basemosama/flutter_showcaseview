@@ -4,68 +4,14 @@ These are the main contributors who have helped shape the ShowCaseView package.
 
 ## Main Contributors
 
-<table>
-  <tr>
-     <td align="center">
-       <a href="https://github.com/vatsaltanna">
-         <img src="https://avatars.githubusercontent.com/u/25323183?s=100" width="100px;" alt=""/>
-         <br />
-         <sub><b>Vatsal Tanna</b></sub>
-       </a>
-     </td>
-     <td align="center">
-       <a href="https://github.com/sanket-simform">
-         <img src="https://avatars.githubusercontent.com/u/65167856?v=4" width="100px;" alt=""/>
-         <br />
-         <sub><b>Sanket Kachhela</b></sub>
-       </a>
-     </td>
-     <td align="center">
-       <a href="https://github.com/ParthBaraiya">
-         <img src="https://avatars.githubusercontent.com/u/36261739?v=4" width="100px;" alt=""/>
-         <br />
-         <sub><b>Parth Baraiya</b></sub>
-       </a>
-     </td>
-     <td align="center">
-       <a href="https://github.com/DhavalRKansara">
-         <img src="https://avatars.githubusercontent.com/u/44993081?v=4" width="100px;" alt=""/>
-         <br />
-         <sub><b>Dhaval Kansara</b></sub>
-       </a>
-     </td>
-  </tr>
-  <tr>
-     <td align="center">
-       <a href="https://github.com/HappyMakadiyaS">
-         <img src="https://avatars.githubusercontent.com/u/97177197?v=4" width="100px;" alt=""/>
-         <br />
-         <sub><b>Happy Makadiya</b></sub>
-       </a>
-     </td>
-     <td align="center">
-       <a href="https://github.com/Ujas-Majithiya">
-         <img src="https://avatars.githubusercontent.com/u/56400956?v=4" width="100px;" alt=""/>
-         <br />
-         <sub><b>Ujas Majithiya</b></sub>
-       </a>
-     </td>
-     <td align="center">
-       <a href="https://github.com/aditya-chavda">
-         <img src="https://avatars.githubusercontent.com/u/41247722?v=4" width="100px;" alt=""/>
-         <br />
-         <sub><b>Aditya Chavda</b></sub>
-       </a>
-     </td>
-     <td align="center">
-       <a href="https://github.com/Flamingloon">
-         <img src="https://avatars.githubusercontent.com/u/81063988?v=4" width="100px;" alt=""/>
-         <br />
-         <sub><b>Sahil Totala</b></sub>
-       </a>
-     </td>
-  </tr>
-</table>
+| ![img](https://avatars.githubusercontent.com/u/25323183?v=4&s=200) | ![img](https://avatars.githubusercontent.com/u/81063988?v=4&s=200) | ![img](https://avatars.githubusercontent.com/u/41247722?v=4&s=200) | 
+|:------------------------------------------------------------------:|:------------------------------------------------------------------:|:------------------------------------------------------------------:|
+|           [Vatsal Tanna](https://github.com/vatsaltanna)           |           [Sahil Totala](https://github.com/Flamingloon)           |         [Aditya Chavda](https://github.com/aditya-chavda)          |
+
+| ![img](https://avatars.githubusercontent.com/u/20923896?v=4&s=200) | ![img](https://avatars.githubusercontent.com/u/56400956?v=4&s=200) | ![img](https://avatars.githubusercontent.com/u/97177197?v=4&s=200) |
+|:------------------------------------------------------------------:|:------------------------------------------------------------------:|:------------------------------------------------------------------:|
+|       [Sanket Kachchela](https://github.com/SanketKachhela)        |        [Ujas Majithiya](https://github.com/Ujas-Majithiya)         |        [Happy Makadiya](https://github.com/HappyMakadiyaS)         |
+
 
 ## How to Contribute
 

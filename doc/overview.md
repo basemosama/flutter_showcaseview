@@ -1,17 +1,15 @@
-# ShowCaseView Overview
+# ShowCaseView
 # #
 A Flutter package that allows you to showcase or highlight your widgets step by step, providing interactive tutorials for your application's UI.
 
 ## Features
 
-- Highlight specific widgets in your app interface
-- Guide users through your app step by step
-- Create engaging onboarding experiences
+- Guide user through your app by highlighting specific widget step by step
 - Customize tooltips with titles, descriptions, and styling
 - Auto-scroll to showcase elements outside the current viewport
 - Support for custom tooltip widgets
-- Animation and transition effects
-- Multiple showcase options (single or multi-showcase views)
+- Animation and transition effects for tooltip
+- Options to showcase multiple widget at the same time
 
 ## Preview
 
@@ -75,7 +73,3 @@ The package offers extensive customization options for:
 - Animation effects and durations
 - Interactive controls
 - Auto-scrolling behavior
-
-## Created By
-
-[Simform Solutions](https://github.com/SimformSolutionsPvtLtd)

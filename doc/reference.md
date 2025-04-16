@@ -106,6 +106,8 @@ In addition to most of the properties from `Showcase`, `Showcase.withWidget` inc
 ### TooltipPosition
 - `TooltipPosition.top`: Display tooltip above the target
 - `TooltipPosition.bottom`: Display tooltip below the target
+- `TooltipPosition.left`: Display tooltip left to the target
+- `TooltipPosition.right`: Display tooltip right to the target
 
 ### TooltipActionPosition
 - `TooltipActionPosition.inside`: Display action buttons inside the tooltip

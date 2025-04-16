@@ -11,8 +11,6 @@ dependencies:
   showcaseview: <latest-version>
 ```
 
-> *Get the latest version from the 'Installing' tab on [pub.dev](https://pub.dev/packages/showcaseview)*
-
 ## 2. Install packages
 
 Run the following command to install the package:

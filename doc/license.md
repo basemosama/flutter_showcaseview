@@ -25,26 +25,3 @@ LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
 ```
-
-## What does this license mean?
-
-The MIT License is a permissive license that allows you to:
-
-- Use the package in commercial applications
-- Modify the package's code
-- Distribute the package and modifications
-- Use the package in private and public projects
-
-The only requirement is that you include the original copyright notice and license text in any copy of the software/source.
-
-## Third-Party Licenses
-
-The ShowCaseView package may include or depend on third-party software components. Please refer to the dependencies section of the `pubspec.yaml` file for a list of these dependencies and their respective licenses.
-
-## Attribution
-
-ShowCaseView is created and maintained by [Simform Solutions](https://github.com/SimformSolutionsPvtLtd).
-
-For more information about Simform's open-source projects, visit:
-- [Flutter Libraries](https://pub.dev/publishers/simform.com/packages)
-- [Mobile Libraries](https://github.com/SimformSolutionsPvtLtd/Awesome-Mobile-Libraries)
