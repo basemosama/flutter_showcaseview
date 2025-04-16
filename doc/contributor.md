@@ -1,5 +1,5 @@
 # Contributors
-
+# #
 These are the main contributors who have helped shape the ShowCaseView package.
 
 ## Main Contributors

@@ -1,5 +1,5 @@
 # API References
-
+# #
 This document provides a reference for the main classes and properties of the ShowCaseView package.
 
 ## ShowCaseWidget Properties

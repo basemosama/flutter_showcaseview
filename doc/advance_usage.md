@@ -1,5 +1,5 @@
 # Advanced Usage
-
+# #
 This guide covers more advanced features and customizations of the ShowCaseView package.
 
 ## Custom Tooltip Widget
