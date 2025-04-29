@@ -69,6 +69,7 @@ class ShowcaseView {
     _hideFloatingWidgetKeys = {
       for (final item in hideFloatingActionWidgetForShowcase) item: true,
     };
+    _mounted =true;
   }
 
   /// Retrieves last registered [ShowcaseView].
