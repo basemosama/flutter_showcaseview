@@ -580,21 +580,25 @@ class _RenderPositionDelegate extends RenderBox
 
     // STEP 8: Final screen boundary check after all adjustments
 
-    // Ensure tooltip stays within horizontal screen bounds
-    xOffset = xOffset.clamp(
-      screenEdgePadding + showcaseOffset.dx,
-      screenSize.width -
-          toolTipBoxSize.width -
-          screenEdgePadding +
-          showcaseOffset.dx,
-    );
+    try {
+      // Ensure tooltip stays within horizontal screen bounds
+      xOffset = xOffset.clamp(
+        screenEdgePadding + showcaseOffset.dx,
+        screenSize.width -
+            toolTipBoxSize.width -
+            screenEdgePadding +
+            showcaseOffset.dx,
+      );
+    }catch(_){}
 
-    // Ensure tooltip stays within vertical screen bounds
-    yOffset = yOffset.clamp(
-      screenEdgePadding + showcaseOffset.dy,
-      screenSize.height - tooltipHeight - screenEdgePadding + showcaseOffset.dy,
-    );
-
+    try {
+      // Ensure tooltip stays within vertical screen bounds
+      yOffset = yOffset.clamp(
+        screenEdgePadding + showcaseOffset.dy,
+        screenSize.height - tooltipHeight - screenEdgePadding +
+            showcaseOffset.dy,
+      );
+    }catch(_){}
     switch (tooltipPosition) {
       case TooltipPosition.top:
         yOffset -= (targetPadding.top);
